@@ -30,6 +30,10 @@ class ProblemSet:
         self.name=name
         self.problems=[]
 
+    def __repr__(self):
+        return '''ProblemSet(name='{}', problems={})'''.format(
+            self.name, str(self.problems))
+
     # Returns the name of the problem set.
     #
     # Your agent does not need to use this method.

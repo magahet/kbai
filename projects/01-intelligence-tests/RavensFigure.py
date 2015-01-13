@@ -19,6 +19,11 @@ class RavensFigure:
         self.name=name
         self.objects=[]
 
+    def __repr__(self):
+        return '''RavensFigure('{}')\n    objects={}'''.format(
+            self.name,
+            str(self.objects))
+
     # Returns the name of the figure. The name of the figure will always match
     # the HashMap key for this figure.
     #

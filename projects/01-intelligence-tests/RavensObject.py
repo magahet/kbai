@@ -19,6 +19,10 @@ class RavensObject:
         self.name=name
         self.attributes=[]
 
+    def __repr__(self):
+        return '''RavensObject(name='{}', attributes={})'''.format(
+            self.name, str(self.attributes))
+
     # The name of this RavensObject. Names are assigned starting with the
     # letter Z and proceeding backwards in the alphabet through the objects
     # in the Frame. Names do not imply correspondence between shapes in

@@ -21,6 +21,10 @@ class RavensAttribute:
         self.name=name
         self.value=value
 
+    def __repr__(self):
+        return '''RavensAttribute('{}', '{}')'''.format(
+            self.name, self.value)
+
     # Returns the name of the attribute. For example, 'shape', 'size', or
     # 'fill'.
     #

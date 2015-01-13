@@ -27,6 +27,15 @@ class RavensProblem:
         self.answerReceived=False
         self.givenAnswer=""
 
+    def __repr__(self):
+        return '''RavensProblem('{}', '{}', '{}')\n    figures={}\n    answersReceived={}\n    givenAnswer={}'''.format(
+            self.name,
+            self.problemType,
+            self.correctAnswer,
+            str(self.figures),
+            self.answerReceived,
+            self.givenAnswer)
+
     # Returns the correct answer to the problem.
     #
     # In order to receive the correct answer to the problem, your Agent must
