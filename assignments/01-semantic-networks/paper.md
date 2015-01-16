@@ -15,16 +15,20 @@ As an overall design goal, our semantic network representation should make it po
 
 ### Labeling
 
-As a specific form of knowledge representation, semantic networks are defined as being made up of nodes, links, and labels. Constructing a semantic network to describe a problem involves assigning application specific meaning to that vocabulary of symbols. In the case of Raven's Progressive Matrices, one mapping could be made by assigning each object in a figure to a node; relationships between objects as well as possible object transformations between figures can be denoted with links and distinguished with labels.
-
-### Correspondence
-
-In order to evaluate 
+As a specific form of knowledge representation, semantic networks are defined as being made up of nodes, links, and labels. Constructing a semantic network to describe a problem involves assigning application specific meaning to that vocabulary of symbols. In the case of Raven's Progressive Matrices, one mapping could be made by assigning each object in a figure to a node; relationships between objects, as well as possible object transformations between figures, can be denoted with links and distinguished with labels.
 
 ### Similarity Metric
 
+In the event that source and target frames have multiple possible transforms, it is important to establish a method for breaking ties. This can be accomplished by setting weights for each transition link in a given semantic network, and preferring the one with the best weight.
+
+### Correspondence
+
+Each identified object must correspond to either an object in the target frame or have a "removed" transition link. The number of ways that objects from source to target frames can be assigned is TODO. In order to find the optimal solution (the one with the highest weighted match), we must try each combination of object assignments. The time complexity of traversing this search space can be reduced by adding heuristics for declaring a solution early. These can include perfect matches, or evaluating the generated semantic networks in order of weight and the assumed difficulty of the problem.
+
+
 ### Matching
 
+After establishing a method to generate semantic networks from both sample and problem frames, we then need a method for comparing them to find a solution. We could simply search for exact matches in 
 
 
 # State Generation
