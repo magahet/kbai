@@ -1,14 +1,15 @@
 % Solving Raven's Progressive Matrices With Semantic Networks
 % Magahet Mendiola
+  (mmendiola3@mail.gatech.edu)
 % January 18th, 2015
 
 
-# Introduction
+## Introduction
 
 We will explore the design of an AI agent capable of solving Raven's Progressive Matrices. This agent will use Semantic Networks for knowledge representation.
 
 
-# Knowledge Representation
+## Knowledge Representation
 
 Semantic networks are a form of knowledge representation that reduces the complexity of solving a given problem. It can be thought of as a dimensionality reduction transformation; the output of which is more informative, tractable, and efficient to solve computationally. Semantic networks accomplish this by describing the problem in a way that is limited to the essential information required to solve the problem, without losing any information required to easily, and fully, understand the salient details.
 
