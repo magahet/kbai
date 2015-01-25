@@ -6,12 +6,12 @@
 
 ## Introduction
 
-We will explore the con
+We will explore the concepts of Problem reduction, Means-Ends, and Generate and Test in the context of solving RPMs.
 
 
 ## Problem reduction
 
-The concept of problem reduction is that a complex problem can be subdivided into multiple, simpler, problems. We do this all the time in everyday life.
+The concept of problem reduction is that a complex problem can be subdivided into multiple, simpler, problems. We do this all the time in everyday life. For example,
 
 The task of solving RPMs can be decomposed into the following:
 
@@ -31,8 +31,13 @@ The task of solving RPMs can be decomposed into the following:
   - Compute the sum of the weights of each valid semantic network.
   - Return the answer choice with the best sum of weights.
 
+By breaking down the complex task of finding a solution to an RPM, the seperate problems that remain are simple enough to handle with naive processes. This methodical approach to problem solving also simplifies the conceptualization of the solution. This makes the task of engineering an AI agent simply a matter of coding modular componants to perform each of these sub-goals; then to design interfaces between each componant to hand off the current state of the solution to the next modular componant.
+
+
 ## Generate and Test
+
+Generate and Test is a methodology for solving problems which involves two constructs. The first is the solution generator. This componant creates possible solutions based on an application specific set of rules. The second componant is the tester.
 
 ## Means-Ends
 
-When evaluating 
+When evaluating
