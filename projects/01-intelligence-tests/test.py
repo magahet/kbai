@@ -35,6 +35,7 @@ def main():
         for problem in os.listdir(args.problems + os.sep + file):  # Each file in the problem set folder becomes a problem in that set.
             f = open(args.problems + os.sep + file + os.sep + problem)  # Make sure to add only problem files to subfolders of /Problems/
             newSet.addProblem(f)
+    return sets
 
     # Initializing problem-solving agent from Agent.java
     agent = Agent(
@@ -64,9 +65,6 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test.')
-    parser.add_argument('--problems', '-p', default='Problems',
-                        help='an integer for the accumulator')
+    parser.add_argument('--problems', '-p', default='Problems')
     args = parser.parse_args()
-    print 'test'
-    print args.problems
-    main()
+    sets = main()
