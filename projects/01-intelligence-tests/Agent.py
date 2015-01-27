@@ -1,5 +1,5 @@
-from SemanticNetwork import SemanticNetworkGenerator
-#from utils import findMatch
+from SemanticNetwork import (SemanticNetworkGenerator, FigureGenerator)
+from Utils import findFigureMatch
 
 
 # Your Agent for solving Raven's Progressive Matrices. You MUST modify this file.
@@ -20,7 +20,7 @@ class Agent:
     # Do not add any variables to this signature; they will not be used by
     # main().
     def __init__(self):
-        pass
+        self.answerIds = ['1', '2', '3', '4', '5', '6']
 
     # The primary method for solving incoming Raven's Progressive Matrices.
     # For each problem, your Agent's Solve() method will be called. At the
@@ -47,13 +47,15 @@ class Agent:
     # @return your Agent's answer to this problem
     def Solve(self, problem):
         bestAnswer = ''
-        #bestScore = 0
-        semanticNetGen = SemanticNetworkGenerator(problem)
-        for semanticNetwork in semanticNetGen:
-            print semanticNetwork
-            #if score > bestScore:
-                #answer = findMatch(problem, transform)
-                #if answer is not None:
-                    #bestScore = score
-                    #bestAnswer = answer
+        lowestScore = 999
+        figureC = problem.figures.get('C')
+        answerChoices = {i: problem.figures.get(i) for i in self.answerIds}
+        for semanticNetwork in SemanticNetworkGenerator(problem):
+            score = semanticNetwork.score
+            if score < lowestScore:
+                for figureX in FigureGenerator(figureC, semanticNetwork):
+                    answer = findFigureMatch(figureX, answerChoices)
+                    if answer is not None:
+                        lowestScore = score
+                        bestAnswer = answer
         return bestAnswer

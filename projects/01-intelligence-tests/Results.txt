@@ -1,4 +1,5 @@
 basic
 -----------
-2x1 Basic Problem 01:  Incorrect (5)
+2x1 Basic Problem 02: 6 Correct (6)
+2x1 Basic Problem 01: 5 Correct (5)
 

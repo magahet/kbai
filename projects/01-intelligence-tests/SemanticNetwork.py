@@ -1,8 +1,11 @@
-'''This module provides a class for generating semantic networks for RPMs.'''
+'''A module for generating semantic networks for RPMs.'''
+
+import itertools
+from Utils import parseFigure
 
 
 class SemanticNetworkGenerator(object):
-    '''Represents a generator of semantic networks for RPMs.'''
+    '''A generator of semantic networks for RPMs.'''
 
     def __init__(self, problem):
         '''Initialize the generator from a provided RPM'''
@@ -20,13 +23,24 @@ class SemanticNetworkGenerator(object):
 
 
 class SemanticNetwork(object):
-    '''Represents a semantic network for RPMs.'''
+    '''A semantic network for RPMs.'''
+
+    differenceWeights = {
+        None: 0,
+        'fill': 1,
+        'unfill': 1,
+        'expand': 1,
+        'contract': 1,
+        'added': 5,
+        'removed': 5,
+    }
 
     def __init__(self, objectMap):
         '''Initialize the network using a given objectMap.'''
         self.attribHandlers = {
             'shape': self.shapeChange,
             'fill': self.fillChange,
+            'size': self.sizeChange,
         }
         self.orientations = self.parseOrientations(objectMap)
         self.transforms = self.parseTransforms(objectMap)
@@ -37,12 +51,30 @@ class SemanticNetwork(object):
             str(self.transforms),
         )
 
+    @property
+    def objectIds(self):
+        return self.transforms.keys()
+
+    @property
+    def score(self):
+        score = 0
+        for objId, transforms in self.transforms.iteritems():
+            for name in transforms:
+                score += self.differenceWeights.get(name)
+        return score
+
     def parseOrientations(self, objectMap):
         pass
 
     def parseTransforms(self, objectMap):
-        transformLists = []
-        for beforeObj, afterObj in objectMap:
+        transformList = {}
+        for objId, (beforeObj, afterObj) in enumerate(objectMap):
+            if beforeObj is None:
+                transformList[objId] = ['added']
+                continue
+            elif afterObj is None:
+                transformList[objId] = ['removed']
+                continue
             beforeAttribs = self.parseAttribs(beforeObj)
             afterAttribs = self.parseAttribs(afterObj)
             transforms = []
@@ -52,8 +84,8 @@ class SemanticNetwork(object):
                 if transform is not None:
                     transforms.append(transform)
             if transforms:
-                transformLists.append(transforms)
-        return transformLists
+                transformList[objId] = transforms
+        return transformList
 
     @staticmethod
     def parseAttribs(obj):
@@ -69,3 +101,56 @@ class SemanticNetwork(object):
                 return 'fill'
             else:
                 return 'unfill'
+
+    def sizeChange(self, before, after):
+        if before != after:
+            if before == 'small':
+                return 'expand'
+            else:
+                return 'contract'
+
+
+class FigureGenerator(object):
+    '''A generator of RPM figures from a semantic network.'''
+
+    def __init__(self, figure, semanticNetwork):
+        '''Initialize the generator from a provided semantic network.'''
+        self.figure = parseFigure(figure)
+        self.semanticNetwork = semanticNetwork
+        self.transformHandlers = {
+            'fill': lambda x: ('fill', 'yes'),
+            'unfill': lambda x: ('fill', 'no'),
+            'expand': lambda x: ('size', 'large'),
+            'contract': lambda x: ('size', 'small'),
+        }
+
+    def __iter__(self):
+        for objectMap in CorrespondenceGenerator(self.figure.keys(),
+                                                 self.semanticNetwork.objectIds):
+            yield self.transformFigure(objectMap)
+
+    def transformFigure(self, objectMap):
+        figure = {}
+        for figObjId, netObjId in objectMap:
+            figObj = self.figure.get(figObjId)
+            attributes = {}
+            for transform in self.semanticNetwork.transforms.get(netObjId):
+                attribute, value = self.transformHandlers[transform](figObj)
+                attributes[attribute] = value
+            for attribute in set(figObj.keys()).difference(attributes.keys()):
+                attributes[attribute] = figObj.get(attribute)
+            figure[figObjId] = attributes
+        return figure
+
+
+class CorrespondenceGenerator(object):
+    '''A generator of ways to match items between two lists.'''
+
+    def __init__(self, list1, list2):
+        self.list1 = list1
+        self.list2 = list2
+
+    def __iter__(self):
+        for reorderedList in itertools.permutations(self.list1,
+                                                    len(self.list2)):
+            yield zip(reorderedList, self.list2)

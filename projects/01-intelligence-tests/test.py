@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from SemanticNetwork import SemanticNetworkGenerator
+from SemanticNetwork import FigureGenerator
+from Utils import findFigureMatch
 
 
 # DO NOT MODIFY THIS FILE.
@@ -74,3 +76,8 @@ if __name__ == "__main__":
     p = s.problems[0]
     nets = [n for n in SemanticNetworkGenerator(p)]
     n = nets[0]
+    c = p.figures['C']
+    ans = [a for a in FigureGenerator(c, n)]
+    answerIds = ['1', '2', '3', '4', '5', '6']
+    choices = {k: v for k, v in p.figures.iteritems() if k in answerIds}
+    print findFigureMatch(ans[0], choices)
