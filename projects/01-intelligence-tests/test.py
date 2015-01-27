@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from SemanticNetwork import SemanticNetworkGenerator
+
 
 # DO NOT MODIFY THIS FILE.
 #
@@ -68,3 +70,7 @@ if __name__ == "__main__":
     parser.add_argument('--problems', '-p', default='Problems')
     args = parser.parse_args()
     sets = main()
+    s = sets[0]
+    p = s.problems[0]
+    nets = [n for n in SemanticNetworkGenerator(p)]
+    n = nets[0]

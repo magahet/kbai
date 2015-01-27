@@ -1,5 +1,5 @@
-from semnet import SemanticNetworkGenerator
-from utils import findMatch
+from SemanticNetwork import SemanticNetworkGenerator
+#from utils import findMatch
 
 
 # Your Agent for solving Raven's Progressive Matrices. You MUST modify this file.
@@ -47,12 +47,13 @@ class Agent:
     # @return your Agent's answer to this problem
     def Solve(self, problem):
         bestAnswer = ''
-        bestScore = 0
+        #bestScore = 0
         semanticNetGen = SemanticNetworkGenerator(problem)
-        for score, transform in semanticNetGen:
-            if score > bestScore:
-                answer = findMatch(problem, transform)
-                if answer is not None:
-                    bestScore = score
-                    bestAnswer = answer
+        for semanticNetwork in semanticNetGen:
+            print semanticNetwork
+            #if score > bestScore:
+                #answer = findMatch(problem, transform)
+                #if answer is not None:
+                    #bestScore = score
+                    #bestAnswer = answer
         return bestAnswer
