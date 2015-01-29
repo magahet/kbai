@@ -41,6 +41,7 @@ class SemanticNetwork(object):
 
     orientationSet = set([
         'inside',
+        'above',
     ])
 
     def __init__(self, objectMap):
@@ -72,16 +73,23 @@ class SemanticNetwork(object):
         return score
 
     def parseOrientations(self, objectMap):
-        pass
-        #newObjectMap = defaultdict(dict)
-        #orientationList = {}
-        #for objId, (beforeObj, afterObj) in enumerate(objectMap):
-            #newObjectMap[beforeObj.name] = objId
-
-            #if afterObj is None:
-                #continue
-            #afterAttribs = self.parseAttribs(afterObj)
-            #orientationList[objId] = afterObj
+        newObjectMap = {}
+        orientationList = {}
+        for objId, (beforeObj, afterObj) in enumerate(objectMap):
+            if afterObj is not None:
+                newObjectMap[afterObj.name] = objId
+        for objId, (beforeObj, afterObj) in enumerate(objectMap):
+            orientationList[objId] = {}
+            if afterObj is None:
+                continue
+            afterAttribs = self.parseAttribs(afterObj)
+            for orientation in self.orientationSet.intersection(afterAttribs.keys()):
+                orientationList[objId][orientation] = [
+                    newObjectMap[k] for
+                    k in afterAttribs[orientation].split(',') if
+                    k in newObjectMap
+                ]
+        return orientationList
 
     def parseTransforms(self, objectMap):
         transformList = {}
@@ -95,7 +103,7 @@ class SemanticNetwork(object):
             beforeAttribs = self.parseAttribs(beforeObj)
             afterAttribs = self.parseAttribs(afterObj)
             transforms = []
-            print beforeAttribs, afterAttribs
+            #print beforeAttribs, afterAttribs
             for attribName in self.attribHandlers.iterkeys():
                 transform = self.attribHandlers[attribName](beforeAttribs.get(attribName),
                                                             afterAttribs.get(attribName))
@@ -148,20 +156,29 @@ class FigureGenerator(object):
 
     def transformFigure(self, objectMap):
         figure = {}
+        netToFigObjMap = {netObjId: figObjId for
+                          figObjId, netObjId in objectMap if
+                          'remove' not in self.semanticNetwork.transforms.get(netObjId)
+                          }
         for figObjId, netObjId in objectMap:
+            if 'remove' in self.semanticNetwork.transforms.get(netObjId):
+                continue
             figObj = self.figure.get(figObjId)
             attributes = {}
             for transform in self.semanticNetwork.transforms.get(netObjId):
-                if transform == 'remove':
-                    break
                 if transform not in self.transformHandlers:
                     continue
                 attribute, value = self.transformHandlers[transform](figObj)
                 attributes[attribute] = value
-            else:
-                for attribute in set(figObj.keys()).difference(attributes.keys()):
-                    attributes[attribute] = figObj.get(attribute)
-                figure[figObjId] = attributes
+            orientations = self.semanticNetwork.orientations.get(netObjId)
+            for orientation, objIds in orientations.iteritems():
+                attributes[orientation] = ','.join([netToFigObjMap[objId] for
+                                                   objId in objIds if
+                                                   objId in netToFigObjMap])
+                print orientation, attributes[orientation]
+            for attribute in set(figObj.keys()).difference(attributes.keys()):
+                attributes[attribute] = figObj.get(attribute)
+            figure[figObjId] = attributes
         return figure
 
 
