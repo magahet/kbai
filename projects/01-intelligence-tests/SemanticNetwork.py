@@ -15,11 +15,14 @@ class SemanticNetworkGenerator(object):
         figureA = self.problem.figures.get('A')
         figureB = self.problem.figures.get('B')
         for objectMap in self.iterObjectAssignment(figureA, figureB):
+            #print objectMap
             yield SemanticNetwork(objectMap)
 
     @staticmethod
     def iterObjectAssignment(figureA, figureB):
-        yield zip(figureA.objects, figureB.objects)
+        for objectMap in CorrespondenceGeneratorWithAddRemove(figureA.objects,
+                                                              figureB.objects):
+            yield objectMap
 
 
 class SemanticNetwork(object):
@@ -31,9 +34,14 @@ class SemanticNetwork(object):
         'unfill': 1,
         'expand': 1,
         'contract': 1,
-        'added': 5,
-        'removed': 5,
+        'add': 5,
+        'remove': 5,
+        'change shape': 5,
     }
+
+    orientationSet = set([
+        'inside',
+    ])
 
     def __init__(self, objectMap):
         '''Initialize the network using a given objectMap.'''
@@ -65,26 +73,35 @@ class SemanticNetwork(object):
 
     def parseOrientations(self, objectMap):
         pass
+        #newObjectMap = defaultdict(dict)
+        #orientationList = {}
+        #for objId, (beforeObj, afterObj) in enumerate(objectMap):
+            #newObjectMap[beforeObj.name] = objId
+
+            #if afterObj is None:
+                #continue
+            #afterAttribs = self.parseAttribs(afterObj)
+            #orientationList[objId] = afterObj
 
     def parseTransforms(self, objectMap):
         transformList = {}
         for objId, (beforeObj, afterObj) in enumerate(objectMap):
             if beforeObj is None:
-                transformList[objId] = ['added']
+                transformList[objId] = ['add']
                 continue
             elif afterObj is None:
-                transformList[objId] = ['removed']
+                transformList[objId] = ['remove']
                 continue
             beforeAttribs = self.parseAttribs(beforeObj)
             afterAttribs = self.parseAttribs(afterObj)
             transforms = []
+            print beforeAttribs, afterAttribs
             for attribName in self.attribHandlers.iterkeys():
                 transform = self.attribHandlers[attribName](beforeAttribs.get(attribName),
                                                             afterAttribs.get(attribName))
                 if transform is not None:
                     transforms.append(transform)
-            if transforms:
-                transformList[objId] = transforms
+            transformList[objId] = transforms
         return transformList
 
     @staticmethod
@@ -93,7 +110,7 @@ class SemanticNetwork(object):
 
     def shapeChange(self, before, after):
         if before != after:
-            return 'shape change'
+            return 'change shape'
 
     def fillChange(self, before, after):
         if before != after:
@@ -135,11 +152,16 @@ class FigureGenerator(object):
             figObj = self.figure.get(figObjId)
             attributes = {}
             for transform in self.semanticNetwork.transforms.get(netObjId):
+                if transform == 'remove':
+                    break
+                if transform not in self.transformHandlers:
+                    continue
                 attribute, value = self.transformHandlers[transform](figObj)
                 attributes[attribute] = value
-            for attribute in set(figObj.keys()).difference(attributes.keys()):
-                attributes[attribute] = figObj.get(attribute)
-            figure[figObjId] = attributes
+            else:
+                for attribute in set(figObj.keys()).difference(attributes.keys()):
+                    attributes[attribute] = figObj.get(attribute)
+                figure[figObjId] = attributes
         return figure
 
 
@@ -154,3 +176,27 @@ class CorrespondenceGenerator(object):
         for reorderedList in itertools.permutations(self.list1,
                                                     len(self.list2)):
             yield zip(reorderedList, self.list2)
+
+
+class CorrespondenceGeneratorWithAddRemove(object):
+    '''A generator of ways to match items between two lists.'''
+
+    def __init__(self, list1, list2):
+        self.list1 = list1
+        self.list2 = list2
+
+    def __iter__(self):
+        if len(self.list1) > len(self.list2):
+            longList = self.list1
+            shortList = self.list2
+            reverse = False
+        else:
+            longList = self.list2
+            shortList = self.list1
+            reverse = True
+        for reorderedList in itertools.permutations(longList,
+                                                    len(longList)):
+            if reverse:
+                yield [i for i in itertools.izip_longest(shortList, reorderedList)]
+            else:
+                yield [i for i in itertools.izip_longest(reorderedList, shortList)]

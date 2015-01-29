@@ -51,6 +51,7 @@ class Agent:
         figureC = problem.figures.get('C')
         answerChoices = {i: problem.figures.get(i) for i in self.answerIds}
         for semanticNetwork in SemanticNetworkGenerator(problem):
+            print semanticNetwork
             score = semanticNetwork.score
             if score < lowestScore:
                 for figureX in FigureGenerator(figureC, semanticNetwork):
