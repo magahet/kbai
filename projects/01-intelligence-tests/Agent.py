@@ -1,5 +1,7 @@
 from SemanticNetwork import (SemanticNetworkGenerator, FigureGenerator)
 from Utils import findFigureMatch
+import time
+import sys
 
 
 # Your Agent for solving Raven's Progressive Matrices. You MUST modify this file.
@@ -45,18 +47,33 @@ class Agent:
     #
     # @param problem the RavensProblem your agent should solve
     # @return your Agent's answer to this problem
-    def Solve(self, problem):
+    def Solve(self, problem, timeout=1):
+        print problem.name
         bestAnswer = ''
-        lowestScore = 999
+        lowestScore = sys.maxint
+        lowestMatchScore = sys.maxint
         figureC = problem.figures.get('C')
         answerChoices = {i: problem.figures.get(i) for i in self.answerIds}
+        startTime = time.time()
         for semanticNetwork in SemanticNetworkGenerator(problem):
+            if time.time() > startTime + timeout:
+                return bestAnswer
             print semanticNetwork
-            score = semanticNetwork.score
-            if score < lowestScore:
-                for figureX in FigureGenerator(figureC, semanticNetwork):
-                    answer = findFigureMatch(figureX, answerChoices)
-                    if answer is not None:
-                        lowestScore = score
-                        bestAnswer = answer
+            for figureX in FigureGenerator(figureC, semanticNetwork):
+                if time.time() > startTime + timeout:
+                    return bestAnswer
+                print figureX
+                answer, matchScore = findFigureMatch(figureX, answerChoices)
+                if answer is None or matchScore > lowestMatchScore:
+                    continue
+                score = semanticNetwork.score
+                if matchScore == lowestMatchScore and score > lowestScore:
+                    continue
+                print 'match:', answer, matchScore
+                lowestScore = score
+                lowestMatchScore = matchScore
+                bestAnswer = answer
+                if lowestMatchScore == 0:
+                    break
+
         return bestAnswer

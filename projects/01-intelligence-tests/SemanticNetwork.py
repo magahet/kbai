@@ -34,6 +34,7 @@ class SemanticNetwork(object):
         'unfill': 1,
         'expand': 1,
         'contract': 1,
+        'rotate': 2,
         'add': 5,
         'remove': 5,
         'change shape': 5,
@@ -42,6 +43,7 @@ class SemanticNetwork(object):
     orientationSet = set([
         'inside',
         'above',
+        'left-of',
     ])
 
     def __init__(self, objectMap):
@@ -50,6 +52,7 @@ class SemanticNetwork(object):
             'shape': self.shapeChange,
             'fill': self.fillChange,
             'size': self.sizeChange,
+            'angle': self.angleChange,
         }
         self.orientations = self.parseOrientations(objectMap)
         self.transforms = self.parseTransforms(objectMap)
@@ -69,6 +72,8 @@ class SemanticNetwork(object):
         score = 0
         for objId, transforms in self.transforms.iteritems():
             for name in transforms:
+                if name.startswith('rotate'):
+                    name = 'rotate'
                 score += self.differenceWeights.get(name)
         return score
 
@@ -134,6 +139,10 @@ class SemanticNetwork(object):
             else:
                 return 'contract'
 
+    def angleChange(self, before, after):
+        if before != after:
+            return 'rotate {}'.format(int(after) - int(before))
+
 
 class FigureGenerator(object):
     '''A generator of RPM figures from a semantic network.'''
@@ -147,6 +156,7 @@ class FigureGenerator(object):
             'unfill': lambda x: ('fill', 'no'),
             'expand': lambda x: ('size', 'large'),
             'contract': lambda x: ('size', 'small'),
+            'change shape': lambda x: ('shape', 'any'),
         }
 
     def __iter__(self):
@@ -166,17 +176,26 @@ class FigureGenerator(object):
             figObj = self.figure.get(figObjId)
             attributes = {}
             for transform in self.semanticNetwork.transforms.get(netObjId):
-                if transform not in self.transformHandlers:
+                if transform.startswith('rotate'):
+                    rotation = int(transform.strip('rotate '))
+                    currentAngle = int(figObj.get('angle', 0))
+                    attributes['angle'] = str(currentAngle + rotation)
+                elif transform not in self.transformHandlers:
                     continue
-                attribute, value = self.transformHandlers[transform](figObj)
-                attributes[attribute] = value
+                else:
+                    attribute, value = self.transformHandlers[transform](figObj)
+                    attributes[attribute] = value
             orientations = self.semanticNetwork.orientations.get(netObjId)
+            attributes['shape'] = figObj.get('shape')
             for orientation, objIds in orientations.iteritems():
                 attributes[orientation] = ','.join([netToFigObjMap[objId] for
                                                    objId in objIds if
                                                    objId in netToFigObjMap])
-                print orientation, attributes[orientation]
-            for attribute in set(figObj.keys()).difference(attributes.keys()):
+                #print orientation, attributes[orientation]
+            # TODO figure out why this is needed
+            for attribute in figObj:
+                if attribute in attributes or attribute in ['above', 'inside', 'left-of']:
+                    continue
                 attributes[attribute] = figObj.get(attribute)
             figure[figObjId] = attributes
         return figure
