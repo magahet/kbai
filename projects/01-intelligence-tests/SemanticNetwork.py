@@ -15,8 +15,10 @@ class SemanticNetworkGenerator(object):
         figureA = self.problem.figures.get('A')
         figureB = self.problem.figures.get('B')
         for objectMap in self.iterObjectAssignment(figureA, figureB):
-            #print objectMap
-            yield SemanticNetwork(objectMap)
+            semanticNetwork = SemanticNetwork(objectMap)
+            yield semanticNetwork
+            for altNetwork in semanticNetwork.generateAlternatives():
+                yield altNetwork
 
     @staticmethod
     def iterObjectAssignment(figureA, figureB):
@@ -71,12 +73,14 @@ class SemanticNetwork(object):
     def score(self):
         score = 0
         for objId, transforms in self.transforms.iteritems():
-            for transform in transforms:
-                if not isinstance(transform, dict):
-                    continue
-                for name in transform.keys():
-                    score += self.differenceWeights.get(name)
+            for name, _ in transforms:
+                score += self.differenceWeights.get(name, 1)
         return score
+
+    def generateAlternatives(self):
+        for i in []:
+            yield None
+        #for objId, transforms in self.transforms.items():
 
     def parseOrientations(self, objectMap):
         newObjectMap = {}
@@ -101,10 +105,10 @@ class SemanticNetwork(object):
         transformList = {}
         for objId, (beforeObj, afterObj) in enumerate(objectMap):
             if beforeObj is None:
-                transformList[objId] = [{'add': None}]
+                transformList[objId] = [('add', None)]
                 continue
             elif afterObj is None:
-                transformList[objId] = [{'remove': None}]
+                transformList[objId] = [('remove', None)]
                 continue
             beforeAttribs = self.parseAttribs(beforeObj)
             afterAttribs = self.parseAttribs(afterObj)
@@ -124,25 +128,25 @@ class SemanticNetwork(object):
 
     def shapeChange(self, before, after):
         if before != after:
-            return {'change shape': after}
+            return ('change shape', after)
 
     def fillChange(self, before, after):
         if before == after:
             return None
         beforeList = before.split(',')
         afterList = after.split(',')
-        return {'fill': [f for f in afterList if f not in beforeList]}
+        return ('fill', [f for f in afterList if f not in beforeList])
 
     def sizeChange(self, before, after):
         if before != after:
             if before == 'small':
-                return {'expand': after}
+                return ('expand', after)
             else:
-                return {'contract': after}
+                return ('contract', after)
 
     def angleChange(self, before, after):
         if before != after:
-            return {'rotate': int(after) - int(before)}
+            return ('rotate', int(after) - int(before))
 
 
 class FigureGenerator(object):
@@ -177,29 +181,28 @@ class FigureGenerator(object):
         figure = {}
         netToFigObjMap = {netObjId: figObjId for
                           figObjId, netObjId in objectMap if
-                          {'remove': None} not in self.semanticNetwork.transforms.get(netObjId)
+                          ('remove', None) not in self.semanticNetwork.transforms.get(netObjId)
                           }
         for figObjId, netObjId in objectMap:
-            if {'remove': None} in self.semanticNetwork.transforms.get(netObjId):
+            if ('remove', None) in self.semanticNetwork.transforms.get(netObjId):
                 continue
             figObj = self.figure.get(figObjId)
             attributes = {}
-            for transformDict in self.semanticNetwork.transforms.get(netObjId, []):
-                for transform, transformValue in transformDict.iteritems():
-                    if transform.startswith('rotate'):
-                        currentAngle = int(figObj.get('angle', 0))
-                        attributes['angle'] = str(currentAngle + transformValue)
-                    elif transform not in self.transformHandlers:
-                        continue
-                    else:
-                        attribute, value = self.transformHandlers[transform](figObj, transformValue)
-                        attributes[attribute] = value
+            for transform, transformValue in self.semanticNetwork.transforms.get(netObjId, []):
+                if transform.startswith('rotate'):
+                    currentAngle = int(figObj.get('angle', 0))
+                    attributes['angle'] = str(currentAngle + transformValue)
+                elif transform not in self.transformHandlers:
+                    continue
+                else:
+                    attribute, value = self.transformHandlers[transform](figObj, transformValue)
+                    attributes[attribute] = value
             orientations = self.semanticNetwork.orientations.get(netObjId)
             attributes['shape'] = figObj.get('shape')
             for orientation, objIds in orientations.iteritems():
                 attributes[orientation] = ','.join([netToFigObjMap[objId] for
-                                                   objId in objIds if
-                                                   objId in netToFigObjMap])
+                                                    objId in objIds if
+                                                    objId in netToFigObjMap])
                 #print orientation, attributes[orientation]
             # TODO figure out why this is needed
             for attribute in figObj:
