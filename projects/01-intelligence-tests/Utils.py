@@ -58,16 +58,25 @@ def remapReferences(obj, objMap):
 
 
 def compareObjects(obj1, obj2):
-    #print obj1
-    #print obj2
     score = 0
     for attrib in set(obj1.keys()).union(obj2.keys()):
-        #print attrib, obj1.get(attrib, 'None'), obj2.get(attrib, 'None')
-        if attrib == 'shape' and obj1.get('shape', '') == 'any':
-            continue
         if obj1.get(attrib, '') != obj2.get(attrib, ''):
-            score += 1
+            score += 10
     return score
+
+
+def compareShapes(shape1, shape2):
+    angles = {
+        'triangle': 3,
+        'square': 4,
+        'pentagon': 5,
+        'hexagon': 6,
+        'heptagon': 7,
+        'octagon': 8,
+    }
+    if shape1 not in angles or shape2 not in angles:
+        return 0 if shape1 == shape2 else 9
+    return abs(angles[shape1] - angles[shape2])
 
 
 class CorrespondenceGenerator(object):

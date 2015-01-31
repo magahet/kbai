@@ -2,6 +2,7 @@ from SemanticNetwork import (SemanticNetworkGenerator, FigureGenerator)
 from Utils import (figuresMatch, findFigureMatch)
 import time
 import sys
+import random
 
 
 # Your Agent for solving Raven's Progressive Matrices. You MUST modify this file.
@@ -47,7 +48,7 @@ class Agent:
     #
     # @param problem the RavensProblem your agent should solve
     # @return your Agent's answer to this problem
-    def Solve(self, problem, timeout=10):
+    def Solve(self, problem, timeout=10, guess=False):
         print '=' * 80
         print problem.name
         bestAnswer = ''
@@ -86,7 +87,7 @@ class Agent:
                         if figScore == lowestFigScore:
                             if cToAnswerScore > lowestCToAnswerScore:
                                 continue
-                print 'match:', answer, matchScore, netScore, figScore
+                print 'answer:', answer, 'mScore:', matchScore, 'nScore:', netScore, 'fScore:', figScore, 'aScore:', cToAnswerScore
                 lowestNetScore = netScore
                 lowestMatchScore = matchScore
                 lowestFigScore = figScore
@@ -97,4 +98,6 @@ class Agent:
                 #if lowestMatchScore == 0:
                     #break
 
+        if not bestAnswer and guess:
+            return random.choice(self.answerIds)
         return bestAnswer

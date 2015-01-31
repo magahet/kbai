@@ -36,7 +36,8 @@ class SemanticNetwork(object):
         'unfill': 1,
         'change size': 1,
         'rotate': 2,
-        'flip': 1,
+        'flip': 3,
+        'vertical-flip': -1,
         'add': 5,
         'remove': 5,
         'change shape': 5,
@@ -56,6 +57,7 @@ class SemanticNetwork(object):
             'fill': self.fillChange,
             'size': self.sizeChange,
             'angle': self.angleChange,
+            'vertical-flip': self.verticalFlip,
         }
         self.positions = self.parsepositions(objectMap)
         self.transforms = self.parseTransforms(objectMap)
@@ -74,21 +76,41 @@ class SemanticNetwork(object):
     def score(self):
         score = 0
         for objId, transforms in self.transforms.iteritems():
-            for name, _ in transforms:
+            for name, _ in transforms.iteritems():
                 score += self.differenceWeights.get(name, 1)
         return score
 
     def generateAlternatives(self):
-        flips = [(objId, transforms.index(('rotate', 180))) for
+        # Horizontal flips
+        flips = [objId for
                  objId, transforms in self.transforms.iteritems() if
-                 ('rotate', 180) in transforms]
+                 transforms.get('rotate', 0) == 180]
         for num in range(1, len(flips) + 1):
-            for objIdSets in itertools.combinations(flips, num):
-                for objId, index in objIdSets:
-                    self.transforms[objId][index] = ('flip', 'horizontal')
+            for objIds in itertools.combinations(flips, num):
+                for objId in objIds:
+                    del self.transforms[objId]['rotate']
+                    self.transforms[objId]['flip'] = 'horizontal'
                 yield self
-                for objId, index in objIdSets:
-                    self.transforms[objId][index] = ('rotate', 180)
+                for objId in objIds:
+                    self.transforms[objId]['rotate'] = 180
+                    del self.transforms[objId]['flip']
+
+        # Vertical flips
+        for num in range(1, len(flips) + 1):
+            for objIds in itertools.combinations(flips, num):
+                for objId in objIds:
+                    flipValue = self.transforms[objId].get('vertical-flip', 'no')
+                    flipValue = 'yes' if flipValue == 'no' else 'no'
+                    self.transforms[objId]['vertical-flip'] = flipValue
+                    #rotateValue = self.transforms[objId]['rotate']
+                    #self.transforms[objId]['rotate'] = (rotateValue + 180) % 360
+                yield self
+                for objId in objIds:
+                    flipValue = self.transforms[objId].get('vertical-flip', 'no')
+                    flipValue = 'yes' if flipValue == 'no' else 'no'
+                    self.transforms[objId]['vertical-flip'] = flipValue
+                    #rotateValue = self.transforms[objId]['rotate']
+                    #self.transforms[objId]['rotate'] = (rotateValue + 180) % 360
 
     def parsepositions(self, objectMap):
         newObjectMapBefore = {}
@@ -124,20 +146,21 @@ class SemanticNetwork(object):
         transformList = {}
         for objId, (beforeObj, afterObj) in enumerate(objectMap):
             if beforeObj is None:
-                transformList[objId] = [('add', None)]
+                transformList[objId] = {'add': None}
                 continue
             elif afterObj is None:
-                transformList[objId] = [('remove', None)]
+                transformList[objId] = {'remove': None}
                 continue
             beforeAttribs = self.parseAttribs(beforeObj)
             afterAttribs = self.parseAttribs(afterObj)
-            transforms = []
-            #print beforeAttribs, afterAttribs
+            transforms = {}
+            print beforeAttribs, afterAttribs
             for attribName in self.attribHandlers.iterkeys():
-                transform = self.attribHandlers[attribName](beforeAttribs.get(attribName, ''),
-                                                            afterAttribs.get(attribName, ''))
-                if transform is not None:
-                    transforms.append(transform)
+                result = self.attribHandlers[attribName](beforeAttribs.get(attribName, ''),
+                                                         afterAttribs.get(attribName, ''))
+                if result is not None:
+                    transform, value = result
+                    transforms[transform] = value
             transformList[objId] = transforms
         return transformList
 
@@ -164,6 +187,10 @@ class SemanticNetwork(object):
         if before != after:
             return ('rotate', int(after) - int(before))
 
+    def verticalFlip(self, before, after):
+        if before != after:
+            return ('vertical-flip', after)
+
 
 class FigureGenerator(object):
     '''A generator of RPM figures from a semantic network.'''
@@ -176,8 +203,9 @@ class FigureGenerator(object):
             'fill': self.fill,
             'unfill': lambda x, v: ('fill', 'no'),
             'change size': self.changeSize,
+            'rotate': self.rotate,
             'change shape': lambda x, v: ('shape', v),
-            'flip': lambda x, v: ('rotate', x.get('rotate', '0')),
+            'vertical-flip': lambda x, v: ('vertical-flip', v),
         }
 
     def __iter__(self):
@@ -203,6 +231,11 @@ class FigureGenerator(object):
         return ('size', after)
 
     @staticmethod
+    def rotate(figObj, value):
+        currentAngle = int(figObj.get('angle', 0))
+        return ('angle', str((currentAngle + value) % 360))
+
+    @staticmethod
     def fill(figObj, value):
         fillList = [f for f in figObj.get('fill', '').split(',') if f not in ['no']]
         for fill in value:
@@ -221,11 +254,8 @@ class FigureGenerator(object):
                 continue
             figObj = self.figure.get(figObjId)
             attributes = {}
-            for transform, transformValue in self.semanticNetwork.transforms.get(netObjId, []):
-                if transform.startswith('rotate'):
-                    currentAngle = int(figObj.get('angle', 0))
-                    attributes['angle'] = str(currentAngle + transformValue)
-                elif transform not in self.transformHandlers:
+            for transform, transformValue in self.semanticNetwork.transforms.get(netObjId, {}).iteritems():
+                if transform not in self.transformHandlers:
                     continue
                 else:
                     try:
@@ -241,7 +271,6 @@ class FigureGenerator(object):
                                                         objId in objIds if
                                                         objId in netToFigObjMap]))
                 #print position, attributes[position]
-            # TODO figure out why this is needed
             for attribute in figObj:
                 if attribute in attributes or attribute in ['above', 'inside', 'left-of', 'overlaps']:
                     continue
