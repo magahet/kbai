@@ -1,5 +1,6 @@
-from SemanticNetwork import (SemanticNetworkGenerator, FigureGenerator)
-from Utils import (figuresMatch, findFigureMatch)
+from SemanticNetworkGenerator import SemanticNetworkGenerator
+from FigureGenerator import FigureGenerator
+from FigureMatcher import (figuresMatch, findFigureMatch)
 import time
 import sys
 import random
@@ -48,7 +49,7 @@ class Agent:
     #
     # @param problem the RavensProblem your agent should solve
     # @return your Agent's answer to this problem
-    def Solve(self, problem, timeout=10, guess=False):
+    def Solve(self, problem, timeout=10, guess=True):
         print '=' * 80
         print problem.name
         bestAnswer = ''
@@ -61,23 +62,19 @@ class Agent:
         startTime = time.time()
         for semanticNetwork in SemanticNetworkGenerator(problem):
             netScore = semanticNetwork.score
-            # DEBUG
-            #if netScore != 3:
-                #continue
             if time.time() > startTime + timeout:
                 return bestAnswer
             print '-' * 80
             print netScore, semanticNetwork
             for figureX, figScore in FigureGenerator(figureC, semanticNetwork):
-                #if len(semanticNetwork.transforms) > 0 and figuresMatch(figureX, figureC, simpleMatch=True):
-                    #continue
                 print '.' * 80
-                print figureX
+                print 'FigureX:', figureX
                 answer, matchScore = findFigureMatch(figureX, answerChoices)
                 # Could not score or there is a better matching figure
                 if answer is None or matchScore > lowestMatchScore:
                     continue
-                cToAnswerScore = figuresMatch(figureC, answerChoices.get(answer, {}))
+                cToAnswerScore = figuresMatch(figureC,
+                                              answerChoices.get(answer, {}))
                 if matchScore == lowestMatchScore:
                     if netScore > lowestNetScore:
                         continue
@@ -87,7 +84,10 @@ class Agent:
                         if figScore == lowestFigScore:
                             if cToAnswerScore > lowestCToAnswerScore:
                                 continue
-                print 'answer:', answer, 'mScore:', matchScore, 'nScore:', netScore, 'fScore:', figScore, 'aScore:', cToAnswerScore
+                print ('Answer: {} mScore: {} nScore: {} '
+                       'fScore: {} aScore: {}').format(answer, matchScore,
+                                                       netScore, figScore,
+                                                       cToAnswerScore)
                 lowestNetScore = netScore
                 lowestMatchScore = matchScore
                 lowestFigScore = figScore
@@ -95,8 +95,6 @@ class Agent:
                 bestAnswer = answer
                 if time.time() > startTime + timeout:
                     return bestAnswer
-                #if lowestMatchScore == 0:
-                    #break
 
         if not bestAnswer and guess:
             return random.choice(self.answerIds)

@@ -1,0 +1,10 @@
+digraph "classes_No_Name" {
+charset="utf-8"
+rankdir=BT
+"0" [label="{Agent|answerIds : list\l|Solve()\l}", shape="record"];
+"1" [label="{CorrespondenceGenerator|list1\llist2\l|}", shape="record"];
+"2" [label="{CorrespondenceGeneratorWithAddRemove|list1\llist2\l|}", shape="record"];
+"3" [label="{FigureGenerator|semanticNetwork\ltransformHandlers : dict\lfigure : dict\l|rotate()\ltransformFigure()\lparseFigure()\lpositionsMatch()\lchangeSize()\lfill()\l}", shape="record"];
+"4" [label="{SemanticNetwork|positions : dict\lattribHandlers : dict\ltransforms : dict\lpositionSet : set\ldifferenceWeights : dict\l|objectIds()\lsizeChange()\lshapeChange()\lfillChange()\lverticalFlip()\lparseAttribs()\lgenerateAlternatives()\lparsepositions()\lscore()\langleChange()\lparseTransforms()\l}", shape="record"];
+"5" [label="{SemanticNetworkGenerator|problem\l|iterObjectAssignment()\l}", shape="record"];
+}
