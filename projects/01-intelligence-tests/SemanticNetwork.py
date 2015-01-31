@@ -1,7 +1,6 @@
 '''A module for generating semantic networks for RPMs.'''
 
-import itertools
-from Utils import parseFigure
+from Utils import (parseFigure, CorrespondenceGenerator, CorrespondenceGeneratorWithAddRemove)
 
 
 class SemanticNetworkGenerator(object):
@@ -34,15 +33,14 @@ class SemanticNetwork(object):
         None: 0,
         'fill': 1,
         'unfill': 1,
-        'expand': 1,
-        'contract': 1,
+        'change size': 1,
         'rotate': 2,
         'add': 5,
         'remove': 5,
         'change shape': 5,
     }
 
-    orientationSet = set([
+    positionSet = set([
         'inside',
         'above',
         'left-of',
@@ -56,12 +54,12 @@ class SemanticNetwork(object):
             'size': self.sizeChange,
             'angle': self.angleChange,
         }
-        self.orientations = self.parseOrientations(objectMap)
+        self.positions = self.parsepositions(objectMap)
         self.transforms = self.parseTransforms(objectMap)
 
     def __repr__(self):
-        return '''SemanticNetwork(orientations={}, transformations={})'''.format(
-            str(self.orientations),
+        return '''SemanticNetwork(positions={}, transformations={})'''.format(
+            str(self.positions),
             str(self.transforms),
         )
 
@@ -82,24 +80,35 @@ class SemanticNetwork(object):
             yield None
         #for objId, transforms in self.transforms.items():
 
-    def parseOrientations(self, objectMap):
-        newObjectMap = {}
-        orientationList = {}
+    def parsepositions(self, objectMap):
+        newObjectMapBefore = {}
+        newObjectMapAfter = {}
+        positionList = {'before': {}, 'after': {}}
         for objId, (beforeObj, afterObj) in enumerate(objectMap):
+            if beforeObj is not None:
+                newObjectMapBefore[beforeObj.name] = objId
             if afterObj is not None:
-                newObjectMap[afterObj.name] = objId
+                newObjectMapAfter[afterObj.name] = objId
         for objId, (beforeObj, afterObj) in enumerate(objectMap):
-            orientationList[objId] = {}
-            if afterObj is None:
-                continue
-            afterAttribs = self.parseAttribs(afterObj)
-            for orientation in self.orientationSet.intersection(afterAttribs.keys()):
-                orientationList[objId][orientation] = [
-                    newObjectMap[k] for
-                    k in afterAttribs[orientation].split(',') if
-                    k in newObjectMap
-                ]
-        return orientationList
+            positionList['before'][objId] = {}
+            positionList['after'][objId] = {}
+            if beforeObj is not None:
+                beforeAttribs = self.parseAttribs(beforeObj)
+                for position in self.positionSet.intersection(beforeAttribs.keys()):
+                    positionList['before'][objId][position] = [
+                        newObjectMapBefore[k] for
+                        k in beforeAttribs[position].split(',') if
+                        k in newObjectMapBefore
+                    ]
+            if afterObj is not None:
+                afterAttribs = self.parseAttribs(afterObj)
+                for position in self.positionSet.intersection(afterAttribs.keys()):
+                    positionList['after'][objId][position] = [
+                        newObjectMapAfter[k] for
+                        k in afterAttribs[position].split(',') if
+                        k in newObjectMapAfter
+                    ]
+        return positionList
 
     def parseTransforms(self, objectMap):
         transformList = {}
@@ -139,10 +148,7 @@ class SemanticNetwork(object):
 
     def sizeChange(self, before, after):
         if before != after:
-            if before == 'small':
-                return ('expand', after)
-            else:
-                return ('contract', after)
+            return ('change size', (before, after))
 
     def angleChange(self, before, after):
         if before != after:
@@ -159,15 +165,31 @@ class FigureGenerator(object):
         self.transformHandlers = {
             'fill': self.fill,
             'unfill': lambda x, v: ('fill', 'no'),
-            'expand': lambda x, v: ('size', 'large'),
-            'contract': lambda x, v: ('size', 'small'),
+            'change size': self.changeSize,
             'change shape': lambda x, v: ('shape', 'any'),
         }
 
     def __iter__(self):
         for objectMap in CorrespondenceGenerator(self.figure.keys(),
                                                  self.semanticNetwork.objectIds):
-            yield self.transformFigure(objectMap)
+            #print objectMap
+            result = self.transformFigure(objectMap)
+            if result is None:
+                continue
+            yield result
+
+    @staticmethod
+    def changeSize(figObj, value):
+        '''Change the size of the object.'''
+        #print figObj.get('size')
+        #print value
+        before, after = value
+        # Raise an exception if the current size does not match the transform before size
+        if figObj.get('size', '') != before:
+            #print 'bad'
+            raise Exception
+        #print 'good'
+        return ('size', after)
 
     @staticmethod
     def fill(figObj, value):
@@ -195,56 +217,40 @@ class FigureGenerator(object):
                 elif transform not in self.transformHandlers:
                     continue
                 else:
-                    attribute, value = self.transformHandlers[transform](figObj, transformValue)
-                    attributes[attribute] = value
-            orientations = self.semanticNetwork.orientations.get(netObjId)
-            attributes['shape'] = figObj.get('shape')
-            for orientation, objIds in orientations.iteritems():
-                attributes[orientation] = ','.join([netToFigObjMap[objId] for
-                                                    objId in objIds if
-                                                    objId in netToFigObjMap])
-                #print orientation, attributes[orientation]
+                    try:
+                        attribute, value = self.transformHandlers[transform](figObj, transformValue)
+                        attributes[attribute] = value
+                    except:
+                        return None
+            if attributes.get('shape', '') != 'any':
+                attributes['shape'] = figObj.get('shape')
+            positions = self.semanticNetwork.positions['after'].get(netObjId)
+            for position, objIds in positions.iteritems():
+                attributes[position] = ','.join(sorted([netToFigObjMap[objId] for
+                                                        objId in objIds if
+                                                        objId in netToFigObjMap]))
+                #print position, attributes[position]
             # TODO figure out why this is needed
             for attribute in figObj:
                 if attribute in attributes or attribute in ['above', 'inside', 'left-of']:
                     continue
                 attributes[attribute] = figObj.get(attribute)
             figure[figObjId] = attributes
-        return figure
+        return figure, self.positionsMatch(netToFigObjMap)
 
+    def positionsMatch(self, netToFigObjMap):
+        netPositions = self.semanticNetwork.positions.get('before', {})
+        #print netPositions
+        #print netToFigObjMap
+        score = 0
+        for objId, figObjId in netToFigObjMap.iteritems():
+            for position in ['inside', 'above', 'left-of']:
+                netValues = set([netToFigObjMap[o] for
+                                o in netPositions.get(objId, {}).get(position, []) if
+                                o in netToFigObjMap])
+                figValues = set([o for
+                                 o in self.figure.get(figObjId, {}).get(position, '').split(',') if o])
+                #print netValues, figValues
+                score += len(netValues.symmetric_difference(figValues))
 
-class CorrespondenceGenerator(object):
-    '''A generator of ways to match items between two lists.'''
-
-    def __init__(self, list1, list2):
-        self.list1 = list1
-        self.list2 = list2
-
-    def __iter__(self):
-        for reorderedList in itertools.permutations(self.list1,
-                                                    len(self.list2)):
-            yield zip(reorderedList, self.list2)
-
-
-class CorrespondenceGeneratorWithAddRemove(object):
-    '''A generator of ways to match items between two lists.'''
-
-    def __init__(self, list1, list2):
-        self.list1 = list1
-        self.list2 = list2
-
-    def __iter__(self):
-        if len(self.list1) > len(self.list2):
-            longList = self.list1
-            shortList = self.list2
-            reverse = False
-        else:
-            longList = self.list2
-            shortList = self.list1
-            reverse = True
-        for reorderedList in itertools.permutations(longList,
-                                                    len(longList)):
-            if reverse:
-                yield [i for i in itertools.izip_longest(shortList, reorderedList)]
-            else:
-                yield [i for i in itertools.izip_longest(reorderedList, shortList)]
+        return score

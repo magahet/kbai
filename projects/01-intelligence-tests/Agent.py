@@ -47,33 +47,41 @@ class Agent:
     #
     # @param problem the RavensProblem your agent should solve
     # @return your Agent's answer to this problem
-    def Solve(self, problem, timeout=1):
+    def Solve(self, problem, timeout=10):
         print problem.name
         bestAnswer = ''
-        lowestScore = sys.maxint
+        lowestNetScore = sys.maxint
+        lowestFigScore = sys.maxint
         lowestMatchScore = sys.maxint
         figureC = problem.figures.get('C')
         answerChoices = {i: problem.figures.get(i) for i in self.answerIds}
         startTime = time.time()
         for semanticNetwork in SemanticNetworkGenerator(problem):
+            netScore = semanticNetwork.score
+            # DEBUG
+            #if netScore != 3:
+                #continue
             if time.time() > startTime + timeout:
                 return bestAnswer
-            print semanticNetwork
-            for figureX in FigureGenerator(figureC, semanticNetwork):
+            print netScore, semanticNetwork
+            for figureX, figScore in FigureGenerator(figureC, semanticNetwork):
+                #if len(semanticNetwork.transforms) > 0 and figuresMatch(figureX, figureC, simpleMatch=True):
+                    #continue
                 if time.time() > startTime + timeout:
                     return bestAnswer
                 print figureX
                 answer, matchScore = findFigureMatch(figureX, answerChoices)
                 if answer is None or matchScore > lowestMatchScore:
                     continue
-                score = semanticNetwork.score
-                if matchScore == lowestMatchScore and score > lowestScore:
+                if matchScore == lowestMatchScore and netScore > lowestNetScore:
+                    continue
+                if netScore == lowestNetScore and figScore > lowestFigScore:
                     continue
                 print 'match:', answer, matchScore
-                lowestScore = score
+                lowestNetScore = netScore
                 lowestMatchScore = matchScore
                 bestAnswer = answer
-                if lowestMatchScore == 0:
-                    break
+                #if lowestMatchScore == 0:
+                    #break
 
         return bestAnswer
