@@ -1,6 +1,7 @@
 '''A module for generating semantic networks for RPMs.'''
 
 from Utils import (parseFigure, CorrespondenceGenerator, CorrespondenceGeneratorWithAddRemove)
+import itertools
 
 
 class SemanticNetworkGenerator(object):
@@ -35,6 +36,7 @@ class SemanticNetwork(object):
         'unfill': 1,
         'change size': 1,
         'rotate': 2,
+        'flip': 1,
         'add': 5,
         'remove': 5,
         'change shape': 5,
@@ -44,6 +46,7 @@ class SemanticNetwork(object):
         'inside',
         'above',
         'left-of',
+        'overlaps'
     ])
 
     def __init__(self, objectMap):
@@ -76,9 +79,16 @@ class SemanticNetwork(object):
         return score
 
     def generateAlternatives(self):
-        for i in []:
-            yield None
-        #for objId, transforms in self.transforms.items():
+        flips = [(objId, transforms.index(('rotate', 180))) for
+                 objId, transforms in self.transforms.iteritems() if
+                 ('rotate', 180) in transforms]
+        for num in range(1, len(flips) + 1):
+            for objIdSets in itertools.combinations(flips, num):
+                for objId, index in objIdSets:
+                    self.transforms[objId][index] = ('flip', 'horizontal')
+                yield self
+                for objId, index in objIdSets:
+                    self.transforms[objId][index] = ('rotate', 180)
 
     def parsepositions(self, objectMap):
         newObjectMapBefore = {}
@@ -166,7 +176,8 @@ class FigureGenerator(object):
             'fill': self.fill,
             'unfill': lambda x, v: ('fill', 'no'),
             'change size': self.changeSize,
-            'change shape': lambda x, v: ('shape', 'any'),
+            'change shape': lambda x, v: ('shape', v),
+            'flip': lambda x, v: ('rotate', x.get('rotate', '0')),
         }
 
     def __iter__(self):
@@ -222,7 +233,7 @@ class FigureGenerator(object):
                         attributes[attribute] = value
                     except:
                         return None
-            if attributes.get('shape', '') != 'any':
+            if attributes.get('shape', '') != 'any' and 'shape' not in attributes:
                 attributes['shape'] = figObj.get('shape')
             positions = self.semanticNetwork.positions['after'].get(netObjId)
             for position, objIds in positions.iteritems():
@@ -232,7 +243,7 @@ class FigureGenerator(object):
                 #print position, attributes[position]
             # TODO figure out why this is needed
             for attribute in figObj:
-                if attribute in attributes or attribute in ['above', 'inside', 'left-of']:
+                if attribute in attributes or attribute in ['above', 'inside', 'left-of', 'overlaps']:
                     continue
                 attributes[attribute] = figObj.get(attribute)
             figure[figObjId] = attributes
@@ -244,7 +255,7 @@ class FigureGenerator(object):
         #print netToFigObjMap
         score = 0
         for objId, figObjId in netToFigObjMap.iteritems():
-            for position in ['inside', 'above', 'left-of']:
+            for position in ['inside', 'above', 'left-of', 'overlaps']:
                 netValues = set([netToFigObjMap[o] for
                                 o in netPositions.get(objId, {}).get(position, []) if
                                 o in netToFigObjMap])
