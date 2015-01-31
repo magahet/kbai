@@ -62,7 +62,7 @@ def compareObjects(obj1, obj2):
     #print obj2
     score = 0
     for attrib in set(obj1.keys()).union(obj2.keys()):
-        #print attrib, obj1.get(attrib, ''), obj2.get(attrib, '')
+        #print attrib, obj1.get(attrib, 'None'), obj2.get(attrib, 'None')
         if attrib == 'shape' and obj1.get('shape', '') == 'any':
             continue
         if obj1.get(attrib, '') != obj2.get(attrib, ''):

@@ -1,5 +1,5 @@
 from SemanticNetwork import (SemanticNetworkGenerator, FigureGenerator)
-from Utils import findFigureMatch
+from Utils import (figuresMatch, findFigureMatch)
 import time
 import sys
 
@@ -48,11 +48,13 @@ class Agent:
     # @param problem the RavensProblem your agent should solve
     # @return your Agent's answer to this problem
     def Solve(self, problem, timeout=10):
+        print '=' * 80
         print problem.name
         bestAnswer = ''
         lowestNetScore = sys.maxint
         lowestFigScore = sys.maxint
         lowestMatchScore = sys.maxint
+        lowestCToAnswerScore = sys.maxint
         figureC = problem.figures.get('C')
         answerChoices = {i: problem.figures.get(i) for i in self.answerIds}
         startTime = time.time()
@@ -63,24 +65,35 @@ class Agent:
                 #continue
             if time.time() > startTime + timeout:
                 return bestAnswer
+            print '-' * 80
             print netScore, semanticNetwork
             for figureX, figScore in FigureGenerator(figureC, semanticNetwork):
                 #if len(semanticNetwork.transforms) > 0 and figuresMatch(figureX, figureC, simpleMatch=True):
                     #continue
-                if time.time() > startTime + timeout:
-                    return bestAnswer
+                print '.' * 80
                 print figureX
                 answer, matchScore = findFigureMatch(figureX, answerChoices)
+                # Could not score or there is a better matching figure
                 if answer is None or matchScore > lowestMatchScore:
                     continue
-                if matchScore == lowestMatchScore and netScore > lowestNetScore:
-                    continue
-                if netScore == lowestNetScore and figScore > lowestFigScore:
-                    continue
-                print 'match:', answer, matchScore
+                cToAnswerScore = figuresMatch(figureC, answerChoices.get(answer, {}))
+                if matchScore == lowestMatchScore:
+                    if netScore > lowestNetScore:
+                        continue
+                    if netScore == lowestNetScore:
+                        if figScore > lowestFigScore:
+                            continue
+                        if figScore == lowestFigScore:
+                            if cToAnswerScore > lowestCToAnswerScore:
+                                continue
+                print 'match:', answer, matchScore, netScore, figScore
                 lowestNetScore = netScore
                 lowestMatchScore = matchScore
+                lowestFigScore = figScore
+                lowestCToAnswerScore = cToAnswerScore
                 bestAnswer = answer
+                if time.time() > startTime + timeout:
+                    return bestAnswer
                 #if lowestMatchScore == 0:
                     #break
 
