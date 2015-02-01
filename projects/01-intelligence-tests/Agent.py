@@ -50,8 +50,12 @@ class Agent:
     # @param problem the RavensProblem your agent should solve
     # @return your Agent's answer to this problem
     def Solve(self, problem, timeout=10, guess=True):
+        '''Solve problem and return answer choice.'''
+
         print '=' * 80
         print problem.name
+
+        # Initialize scores and current best answer.
         bestAnswer = ''
         lowestNetScore = sys.maxint
         lowestFigScore = sys.maxint
@@ -60,21 +64,37 @@ class Agent:
         figureC = problem.figures.get('C')
         answerChoices = {i: problem.figures.get(i) for i in self.answerIds}
         startTime = time.time()
+
+        # Generate and evaluate each semantic network that describes the A:B
+        # relationship.
         for semanticNetwork in SemanticNetworkGenerator(problem):
+            # Calculate the complexity of the transforms
             netScore = semanticNetwork.score
-            if time.time() > startTime + timeout:
-                return bestAnswer
             print '-' * 80
             print netScore, semanticNetwork
+
+            # Generate and evaluate each figure that can be created given
+            # figure C and the semantic network.
             for figureX, figScore in FigureGenerator(figureC, semanticNetwork):
                 print '.' * 80
                 print 'FigureX:', figureX
+                # Find the closest match between the generated figure and the
+                # answer choices. Get the similarity score between the chosen
+                # answer and the generated figure.
                 answer, matchScore = findFigureMatch(figureX, answerChoices)
+
                 # Could not score or there is a better matching figure
                 if answer is None or matchScore > lowestMatchScore:
                     continue
+
+                # Calculate the similarity between figure C and the chosen
+                # answer.
                 cToAnswerScore = figuresMatch(figureC,
                                               answerChoices.get(answer, {}))
+
+                # Evaluate whether the current answer is better than the
+                # current best answer by comparing the various scores. These
+                # scores have a strict hierarchy.
                 if matchScore == lowestMatchScore:
                     if netScore > lowestNetScore:
                         continue
@@ -88,14 +108,21 @@ class Agent:
                        'fScore: {} aScore: {}').format(answer, matchScore,
                                                        netScore, figScore,
                                                        cToAnswerScore)
+
+                # Set the current best scores
                 lowestNetScore = netScore
                 lowestMatchScore = matchScore
                 lowestFigScore = figScore
                 lowestCToAnswerScore = cToAnswerScore
                 bestAnswer = answer
+
+                # If the agent reaches the timeout limit, return the current
+                # best answer.
                 if time.time() > startTime + timeout:
                     return bestAnswer
 
+        # If an answer could not be found, make a guess.
         if not bestAnswer and guess:
-            return random.choice(self.answerIds)
+            bestAnswer = random.choice(self.answerIds)
+
         return bestAnswer

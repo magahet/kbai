@@ -33,7 +33,7 @@ class SemanticNetwork(object):
             'angle': self.angleChange,
             'vertical-flip': self.verticalFlip,
         }
-        self.positions = self.parsepositions(objectMap)
+        self.positions = self.parsePositions(objectMap)
         self.transforms = self.parseTransforms(objectMap)
 
     def __repr__(self):
@@ -76,17 +76,13 @@ class SemanticNetwork(object):
                     flipValue = self.transforms[objId].get('vertical-flip', 'no')
                     flipValue = 'yes' if flipValue == 'no' else 'no'
                     self.transforms[objId]['vertical-flip'] = flipValue
-                    #rotateValue = self.transforms[objId]['rotate']
-                    #self.transforms[objId]['rotate'] = (rotateValue + 180) % 360
                 yield self
                 for objId in objIds:
                     flipValue = self.transforms[objId].get('vertical-flip', 'no')
                     flipValue = 'yes' if flipValue == 'no' else 'no'
                     self.transforms[objId]['vertical-flip'] = flipValue
-                    #rotateValue = self.transforms[objId]['rotate']
-                    #self.transforms[objId]['rotate'] = (rotateValue + 180) % 360
 
-    def parsepositions(self, objectMap):
+    def parsePositions(self, objectMap):
         newObjectMapBefore = {}
         newObjectMapAfter = {}
         positionList = {'before': {}, 'after': {}}
@@ -128,10 +124,11 @@ class SemanticNetwork(object):
             beforeAttribs = self.parseAttribs(beforeObj)
             afterAttribs = self.parseAttribs(afterObj)
             transforms = {}
-            print beforeAttribs, afterAttribs
             for attribName in self.attribHandlers.iterkeys():
-                result = self.attribHandlers[attribName](beforeAttribs.get(attribName, ''),
-                                                         afterAttribs.get(attribName, ''))
+                result = self.attribHandlers[attribName](
+                    beforeAttribs.get(attribName, ''),
+                    afterAttribs.get(attribName, '')
+                )
                 if result is not None:
                     transform, value = result
                     transforms[transform] = value

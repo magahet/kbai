@@ -4,6 +4,8 @@ from CorrespondenceGenerator import CorrespondenceGenerator
 class FigureGenerator(object):
     '''A generator of RPM figures from a semantic network.'''
 
+    positions = ['above', 'inside', 'left-of', 'overlaps']
+
     def __init__(self, figure, semanticNetwork):
         '''Initialize the generator from a provided semantic network.'''
         self.figure = self.parseFigure(figure)
@@ -20,7 +22,6 @@ class FigureGenerator(object):
     def __iter__(self):
         for objectMap in CorrespondenceGenerator(self.figure.keys(),
                                                  self.semanticNetwork.objectIds):
-            #print objectMap
             result = self.transformFigure(objectMap)
             if result is None:
                 continue
@@ -29,10 +30,9 @@ class FigureGenerator(object):
     @staticmethod
     def changeSize(figObj, value):
         '''Change the size of the object.'''
-        #print figObj.get('size')
-        #print value
         before, after = value
-        # Raise an exception if the current size does not match the transform before size
+        # Raise an exception if the current size does not match the transform
+        # before size.
         if figObj.get('size', '') != before:
             #print 'bad'
             raise Exception
@@ -46,7 +46,9 @@ class FigureGenerator(object):
 
     @staticmethod
     def fill(figObj, value):
-        fillList = [f for f in figObj.get('fill', '').split(',') if f not in ['no']]
+        fillList = [f for f in
+                    figObj.get('fill', '').split(',') if
+                    f not in ['no']]
         for fill in value:
             if fill not in fillList:
                 fillList.append(fill)
@@ -54,21 +56,24 @@ class FigureGenerator(object):
 
     def transformFigure(self, objectMap):
         figure = {}
-        netToFigObjMap = {netObjId: figObjId for
-                          figObjId, netObjId in objectMap if
-                          ('remove', None) not in self.semanticNetwork.transforms.get(netObjId)
-                          }
+        netToFigObjMap = {
+            netObjId: figObjId for
+            figObjId, netObjId in objectMap if
+            ('remove', None) not in self.semanticNetwork.transforms.get(netObjId)
+        }
         for figObjId, netObjId in objectMap:
             if ('remove', None) in self.semanticNetwork.transforms.get(netObjId):
                 continue
             figObj = self.figure.get(figObjId)
             attributes = {}
-            for transform, transformValue in self.semanticNetwork.transforms.get(netObjId, {}).iteritems():
+            transforms = self.semanticNetwork.transforms.get(netObjId, {})
+            for transform, transformValue in transforms.iteritems():
                 if transform not in self.transformHandlers:
                     continue
                 else:
                     try:
-                        attribute, value = self.transformHandlers[transform](figObj, transformValue)
+                        attribute, value = self.transformHandlers[transform](
+                            figObj, transformValue)
                         attributes[attribute] = value
                     except:
                         return None
@@ -76,12 +81,12 @@ class FigureGenerator(object):
                 attributes['shape'] = figObj.get('shape')
             positions = self.semanticNetwork.positions['after'].get(netObjId)
             for position, objIds in positions.iteritems():
-                attributes[position] = ','.join(sorted([netToFigObjMap[objId] for
-                                                        objId in objIds if
-                                                        objId in netToFigObjMap]))
-                #print position, attributes[position]
+                attributes[position] = ','.join(
+                    sorted([netToFigObjMap[objId] for
+                            objId in objIds if
+                            objId in netToFigObjMap]))
             for attribute in figObj:
-                if attribute in attributes or attribute in ['above', 'inside', 'left-of', 'overlaps']:
+                if attribute in attributes or attribute in self.positions:
                     continue
                 attributes[attribute] = figObj.get(attribute)
             figure[figObjId] = attributes
@@ -89,19 +94,17 @@ class FigureGenerator(object):
 
     def positionsMatch(self, netToFigObjMap):
         netPositions = self.semanticNetwork.positions.get('before', {})
-        #print netPositions
-        #print netToFigObjMap
         score = 0
         for objId, figObjId in netToFigObjMap.iteritems():
             for position in ['inside', 'above', 'left-of', 'overlaps']:
                 netValues = set([netToFigObjMap[o] for
-                                o in netPositions.get(objId, {}).get(position, []) if
+                                o in netPositions.get(objId, {}).get(
+                                    position, []) if
                                 o in netToFigObjMap])
                 figValues = set([o for
-                                 o in self.figure.get(figObjId, {}).get(position, '').split(',') if o])
-                #print netValues, figValues
+                                 o in self.figure.get(figObjId, {}).get(
+                                     position, '').split(',') if o])
                 score += len(netValues.symmetric_difference(figValues))
-
         return score
 
     @staticmethod

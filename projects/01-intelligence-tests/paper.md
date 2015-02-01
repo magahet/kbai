@@ -1,74 +1,119 @@
-% Utilizing Generate and Test, Means-Ends Analysis, and Problem Reduction in Designing an AI Agent to Solve Raven's Progressive Matrices
+% AI Agent to Solve 2x1 Visual Analogy Problems
 % Magahet Mendiola
   (mmendiola3@mail.gatech.edu)
-% January 25th, 2015
+% January 31th, 2015
 
 
 ## Introduction
 
-We will explore the concepts of Problem Reduction, Means-Ends Analysis, and Generate and Test in the context of solving RPMs (Raven's Progressive Matrices).
+We will describe the design of an AI agent built to solve 2x1 visual analogy problems. This will include details on the agent's architecture, design trade-offs, performance, and further improvements.
 
 
-## Problem reduction
+## Architecture
 
-The concept of problem reduction is that a complex problem can be subdivided into multiple, simpler, problems. Humans do this quite naturally. For example, when preparing a meal, we do not expect to go directly from a pantry of raw ingredients to a Thanksgiving feast. We break down the overall goal into the set of dishes to be served. Each dish is then further divided into the phases of preparation and cooking required for each. Although thousands of individual actions may be required overall, we are able to easily, and naturally, deconstruct the problem into simple tasks.
-
-In the case of developing AI agents to solve RPMs, problem reduction again provides a way to simplify the very complex overall goal. The task of solving RPMs could be decomposed the following way:
+The overall design goal of the agent is to represent the visual analogy between frames A and B in a way that can be computationally applied to frame C and matched against the given answer choices. To perform this, we can break down the agent's tasks in the following way:
 
 - Generate valid semantic networks for frames A and B.
-    - Label objects in frame A
-    - Create semantic network nodes and links showing spatial relationships between objects.
-    - Label objects in frame B in each possible way
-    - Complete the semantic network showing the transform links for each possible combination of transforms given the corresponding object labels.
-    - Yield or store the generated semantic network for evaluation.
+    - Generate correspondence maps for objects in frame A and frame B
+    - Create semantic network nodes and links describing the spatial relationships between objects in each frame.
+    - Create links describing the transformations between corresponding objects in each frame.
+    - Compute the complexity of the semantic network.
+    - Pass each semantic network on to the next task.
  
-- Find the transformations that describe the relationship between C the answer choices.
-    - Taking each generated semantic network representing the relationship between A and B, apply that transform to C.
-    - Match the resulting figure X to each of the answer choices.
-    - If a match is found, store the result along with the semantic network.
+- Generate figures from figure C using each provided semantic network.
+    - Generate correspondence maps for objects in the semantic network and frame C.
+    - Apply semantic network transformations to each object.
+    - Change spatial relationships to those described in the semantic network.
+    - Pass each figure on to the next task.
 
-- Find the best weighted semantic network among those that describe the relationship between C and the answer choices.
-    - Compute the sum of the weights of each valid semantic network.
-    - Return the answer choice with the best sum of weights.
+- Find the best match between each provided figure and the answer choices
+    - Generate correspondence maps for objects in frame C and each answer figure.
+    - Compare the resulting figure to each of the answer choices.
+    - Pass the closest matching figure and the answer choice it matches to the next task.
 
-By breaking down the complex task of finding a solution to an RPM, the separate problems that remain are simple enough to handle with naive processes. This methodical approach to problem solving also simplifies the conceptualization of the solution. This makes the task of engineering an AI agent simply a matter of coding modular components to reach each of these sub-goals; then to design interfaces between each component to hand off the current state of the solution to the next modular component.
+- Store the current best answer choice.
+    - Disregard the answer if it's matching score is worse then the current best.
+    - Disregard the answer if it's semantic network is more complex than the current best.
+    - Disregard the answer if the generated figure matches the semantic network spatial relationship less than the current best.
+    - Save the answer and all scoring types as the current best.
 
+- Return the current best answer choice.
+    - Return when all combinations of semantic networks, generated figures, and possible answer matches have been evaluated.
+    - Return the current best answer if the timeout expires.
+    - Return a random guess if no candidate answers were found.
 
-## Generate and Test
+To distribute these task into modular pieces, the agent is divided into the following components:
 
-Generate and Test is a methodology for problem solving which involves the creation of possible solutions and the evaluation of these to test their viability as the correct answer. This process requires two components; the first is the solution generator, which creates possible solutions based on an application specific set of rules. The second component is the tester, which compares each generated solution against application specific criteria in order to determine whether a given answer is correct.
+![Agent Architecture](architecture.png)
 
-We can utilize Generate and Test all throughout the design of our RPM agent. From the previous breakdown of our agent's tasks, we notice that the first main process is to generate valid semantic networks to describe the relationship between frames A and B. We can think of this sub-task as a generator of transformation descriptions. These descriptions are then tested, in the second main sub-task, against the figures in C and each of the answer choices.
-
-![RPM Agent Producers/Consumers](gen-test.png)
-
-The second sub-task of our agent would take these generated semantic networks and apply them to frame C. The resulting figure would be compared to each of the answer choices. Each match would be considered a generated possible solution. These solution transforms would then be passed to the final sub-task, which would compute the weighted value of the transform. This design separates the creation of candidate solutions and the evaluation of those solutions against a defined metric. Separating the process of creating and testing solutions allows us to break down the problem further into modular and simplistic functions. In this regard, Generate and Test can be considered a form of Problem Reduction.
-
-## Means-Ends Analysis
-
-Means-Ends Analysis is the concept that complex solutions can be found incrementally, by taking small steps and evaluating whether you have moved closer to the final goal. There are many examples of this methodology, including A* path-finding and hill-climbing optimization.
-
-A* uses a heuristic that evaluates whether a given movement (the means), would bring us closer to the goal position (the ends). As the algorithm runs, it searches the landscape for the most direct path to the goal. This reduces the number of positions the algorithm needs to evaluate by focusing on those positions that bring us closer to the goal. We see an example of this in figure 2.
-
-![A* Example from www.raywenderlich.com/4946/introduction-to-a-pathfinding](http://cdn4.raywenderlich.com/wp-content/uploads/2011/09/Cat-Maze_8.jpg)
-
-Hill-climbing, likewise, takes incremental steps in the feature space and performs an evaluation of whether the change had a positive or negative effect. Means-Ends is a powerful methodology in solving complex problems incrementally. It can be thought of as a method of problem reduction in that it reduces a complex problem, like finding a safe path through rough terrain, into a simpler problem of finding how to reach a very nearby point that happens to be incrementally closer to the final goal.
-
-![Hill-Climbing Example from people.westminstercollege.edu/faculty/ ggagne/fall2014/301/chapters/chapter4](http://people.westminstercollege.edu/faculty/ggagne/fall2014/301/chapters/chapter4/hill-climbing1.png)
-
-As we can see in figure 3, hill-climbing, and by extension Means-Ends Analysis, has the caveat of local optimums. This is a position that could be discovered by moving incrementally towards what appears to be the best solution, but is only optimal in the local feature space. We have to be aware that these exists and prepare to design mechanisms to mitigate the trap, such as random restart in the context of hill-climbing.
-
-In our RPM problem solving agent, Means-Ends Analysis can be utilized in a number of ways. First, as we generate semantic networks in the A:B transform generator, we can reduce the number of transforms to evaluate by rejecting those that have a weighted score worse than the current best solution. This will require running the scorer after the initial transform generator instead of after the transform has been matched to a solution choice. This trade-off will have to be evaluated based on performance gains, but it seems more efficient to disregard transforms before they are evaluated against frames C and the answer choices. This supposes that the computational cost of scoring transforms is lower than applying those transforms to C and matching against the candidate figures.
-
-![RPM Agent w/ Means-Ends](means-ends.png)
-
-Means-Ends Analysis can also be used in the transform generator itself by coding it to create semantic networks using the best weighted transforms first. This preference for simpler transforms guides the agent toward the optimal solution. This could be quite important as a time-constrained agent would limit it's evaluation of the solution space. Like hill-climbing optimization, we can escape the process early and still be left with a strong final answer choice.
+Figure 1 depicts the separate components which handle each sub-task involved in solving the problem. We will explore the function and relationship of each in the following sections.
 
 
-## Conclusion
+### Correspondence Generator
 
-The concepts we've covered have many inter-related facets. We've seen that both Means-Ends Analysis and Generate and Test can be thought of a specific ways of performing Problem Reduction. They each break down the problem into smaller, more manageable, components.
+The correspondence generator is a generic utility which takes two lists of objects and creates every possible mapping between them. This is utilized by the generators for semantic networks, figures, and answer matches. Although it iterates through every possible object correspondence, it cannot be considered a strong generator since it does not include any logic regarding what mappings it yields. This is left to the logic within the more specific generators.
 
-We have also seen that in designing our RPM agent to use Generate and Test, we created a generator that prefers solutions that improve our weighted transform score. Thus our generator is performing Means-Ends Analysis internally, which illustrates how these concepts work in concert with one another to simplify the process of creating a robust AI agent.
 
-Finally, we should remember that the more general concept of Problem Reduction made the modular analysis of each stage of solving RPMs more manageable and easier to conceptualize. Designing and AI agent to perform these simplified set of tasks is far less daunting than approaching the problem holistically.
+### Semantic Network Generator
+
+The agent begins by instantiating the semantic network generator, which creates and yields each valid variation of semantic networks. These each describe the spatial relationship between objects in frames A and B, as well as the transformations of those objects between the frames.
+
+It performs this task by first calling the correspondence generator to create every possible mapping between each object in the two frames. These object mappings are provided to the semantic network class to create the knowledge representation. This semantic network is then yielded back to the agent.
+
+Before the generator continues with a new object mapping, it yields each alternative semantic network that could be created from the current mapping. These alternatives include cases where object transitions can be described in multiple ways, such as by a rotation or a reflection.
+
+
+### Semantic Network Model
+
+The knowledge representation is created by first inspecting the spatial relationships between objects in each frame. This is done by extracting the values from each object's spatial relationship attributes and remapping those values with the object labels used in the semantic network. Relationships from both frames A and B are parsed and stored.
+
+The network then iterates through the object mappings provided and parses the transformations each object requires to become their corresponding object in frame B. Each non-spatial attribute is taken from the object in each frame and provided to a specialized hander function for each attribute type. These handlers determine the transformation required to change an attribute from one value to another. As an example, this handler describes the transformation for an object whose angle attribute changes from one frame to the next:
+
+```
+def angleChange(self, before, after):
+    if before != after:
+        return ('rotate', int(after) - int(before))
+```
+
+### Figure Generator
+
+The agent takes each semantic network generated and passes it to the figure generator. This utilizes the correspondence generator to iterate through every possible mapping between the objects represented in the semantic network and those in figure C. Each of these mappings is used to create a candidate figure X. This figure is created by applying the semantic network transforms on figure C, and by applying the spatial relationships stored in the semantic network that described frame B.
+
+The figure generator also includes logic to create a score for how well figure C, with each object mapping, matches the spatial relationships observed in figure A. This allows the agent to prefer answers that are derived from figures that most closely match the semantic network spatial representation. The agent is also more robust to cases where perfect matches are not possible between spatial relationships in figures A and C.
+
+
+### Figure Match Finder
+
+Once the agent has a candidate figure X, it passes this to the figure match finder. The match finder compares figure X to each of the answer choices and returns the closest match.
+
+The correspondence generator is again used to create object maps from figure X to a given answer frame. These object maps are then used to score the difference between objects in each figure. These scores are created by summing the set of attributes that do not match between each object. The best total score from each object mapping is returned to figure matcher, which in turn passes the best scoring figure from the answer choices along with the matching score back to the agent.
+
+Since the figure matcher returns an answer even in cases where a perfect match is not found, the agent is able to make well informed guesses without accounting for every possible transformation and relationship in and between the figures.
+
+
+## Performance
+
+The main contributer to the time complexity of the agent, as it is currently designed, is the number of object mappings to consider. The number of mappings is equal to $n!$, where $n$ is the number of objects in the figure or network with the greater number of objects. The full set of object mappings is considered in three phases of the agent's problem solving process: 
+
+- semantic network generation
+- figure generation
+- figure matching
+
+Figure matching iterates through each object mapping for each answer choice. Without heuristics for discarding many of these generated networks and figures, the total number of object mappings created is nearly an order of magnitude greater. A few of these are implemented, such as the agent's timeout rule; this stops the evaluation of the problem after a set amount of time and returns the current best answer.
+
+The fact that the number of objects in 2x1 visual analogy problems is limited makes this design practical; however, problems with just five objects in each figure begin to introduce a noticeable delay in problem solving. Once the agent is adapted to larger grid problems, the time complexity of the correspondence generators will become more of an issue.
+
+
+## Further Improvements
+
+There are many intricate spatial relationships and transformations that are obvious to a human observer, but are not captured by the current agent. Figure 2 shows an example problem that cannot be solved with the current agent's design.
+
+![Example Problem not solvable by current agent](hard-problem.png)
+
+Improvements to the agent should include representations for modeling relationship between individual objects, such as comparing the number of sides and angles between corresponding objects.
+
+There are also many problems that require the application of transformations to objects that are in figure C but not in figures A and B. Another improvement would be to design a method for generating additional figures based on these implied transformations.
+
+Finally, spatial relationships become complex when whole figures are rotated or flipped. Human observation is robust enough to account for such situations; however the current agent is unable to reorganize the intra-figure spatial relationships after such transforms.
+
+Each of these special considerations require more complex strategies for modeling the spatial and transformation relationships. They also require more sophisticated processes for evaluating these relationships without introducing significant increases in the number of figures and semantic networks to consider.
