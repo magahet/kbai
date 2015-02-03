@@ -1,0 +1,35 @@
+1. Express the meaning of the sentences of the story in the knowledge representation language of frames.
+ 2. In this story, the protagonist performs a kind of diagnosis and repair of Henry the robot. Illustrate the production system architecture for the diagnosis task in the story. Invent percepts, actions and rules as needed (with at least 3 percepts, 3 actions, 3 rules). Demonstrate how the production system architecture would work for this story (that is, given Henry’s symptoms, it would ask the same questions that our protagonist asks). Show the evolving contents of the working memory.
+ 3. Now suppose that one of the rules was missing in the long-term memory of the production system. Show why, when and how this rule may be learned from the case base. 
+
+
+Robots love me.
+ 
+ As much as robots can love. And in a Platonic sense, of course. Something about my chubby little baby face sets off their simulated paternal instincts and they all bend over backwards to answer my questions. That sort of thing comes in handy with my job.
+ 
+ I knelt in front of the unmoving blue robot. As if brooding, it sat on the floor in the middle of the living room. It was large and bulky, a few years old but in decent enough shape. Not one of those smooth, humanoid-looking models that have been flooding the market. It was more from the “Rock ’Em, Sock ’Em” school of design. Behind me, the family stood anxious, worried, huddled together.
+ 
+ “Can you fix him, doctor?” the wife asked. She hugged her young daughter close, and her husband did the same to her.
+ “I’m not a doctor,” I said absent-mindedly as I eyed my scanner.
+ “I beg your pardon?” the husband chimed in, brushing a loose strand of hair across his comb-over with his palm.
+ “Hm?” I asked, coming out of my focus. “Oh. I’m not a doctor. Robots don’t really have brains, so they don’t need a psychiatrist or anything like...” I trailed off, before looking back to my work. “I’m a technician.”
+ “Henry just sat down and stopped moving,” said the little girl, sounding close to tears.
+ 
+ “We just had him in for maintenance and everything checked out,” the wife added. “I don’t understand it.”
+ I nodded and made a little “hmm” sound, but I wasn’t really listening. “Unit NX-6401, respond to my voice.”
+ “Henry,” the robot corrected me in a surprisingly human voice. It still hadn’t moved, and the lights hadn’t returned to its dim photoreceptors.
+ “Okay, Henry,” I conceded. “Are you functioning correctly?”
+ It made a soft snorting noise. “If that’s what you call this.”
+ I sat cross-legged on the carpet in front of it. “Hey, now. What’s that all about?” I put my hand on its shoulder. Henry’s ocular lights activated, but just barely. It didn’t respond right away.
+ “The Johnsons across the street bought a new robot,” it said finally.
+ “Yeah,” the husband confirmed from behind me, “One of those new A-01 models.”
+ “Go on,” I coaxed.
+ “I’ve seen it walking their kids to school and fixing their roof, and it’s got those extendable arms and a hedge-clipper accessory, and...”
+ “And its making you feel not as special?” I asked in a soothing voice.
+ “The A-01s are so great,” it said. “One of them would be so much more functional for this family. It would be better than I am.”
+ “Henry, I’m going to tell you a secret about humans. It is a bit paradoxical, so promise me your head will not explode when I tell you.”
+ It nodded, its eyes glowing brighter. 
+ “Henry,” I said. “Humans build emotional attachments. And they don’t always want what’s shiny and new. They want what they love.”
+ “They love me?” it asked. It stood up, and after a moment, I followed.
+ “It isn’t very logical, doctor.” Henry’s voice sounded happy.
+ I smiled. “I’m not a doctor.” 
