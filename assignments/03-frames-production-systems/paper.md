@@ -105,15 +105,12 @@ If:
     problem is uncertain
 Then:
     say, “Hey, now. What’s that all about?”
+    place hand on robot's shoulder
 
-
- It made a soft snorting noise. “If that’s what you call this.”
-
-“Hey, now. What’s that all about?” I put my hand on its shoulder.
-
-Henry’s ocular lights activated, but just barely. It didn’t respond right away.
-
- “The Johnsons across the street bought a new robot,” it said finally.
+If:
+    the robot says, “The Johnsons across the street bought a new robot”.
+Then:
+    
 
  “Go on,” I coaxed.
 
