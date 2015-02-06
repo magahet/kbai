@@ -76,43 +76,59 @@ Robots love me.
  
  I knelt in front of the unmoving blue robot. As if brooding, it sat on the floor in the middle of the living room. It was large and bulky, a few years old but in decent enough shape. Not one of those smooth, humanoid-looking models that have been flooding the market. It was more from the “Rock ’Em, Sock ’Em” school of design. Behind me, the family stood anxious, worried, huddled together.
  
-robot name:
 
-If: 
-    robot has no name
-Then: 
-    say, “Unit NX-6401, respond to my voice.”
+Working Memory
 
-If: 
-    robot responds with his name
-Then: 
-    set robot name
+    goal: meet robot
+
 
 If:
-    robot has name 
-    problem is unknown
+    goal is to meet robot
+    and I perceive robot has no name
+Then: 
+    ask robot to respond to my voice.”
+
+If: 
+    goal is to meet robot
+    and I perceive robot responds with his name
+Then: 
+    add robot name
+    add problem = unknown
+    suggest goal of diagnose problem
+
+
+Working Memory
+
+    robot name: Henry
+    goal: diagnose problem
+    problem: unknown
+
+
+If:
+    goal is to diagnose problem
+    and I perceive problem is unknown
 Then:
     say, "Are you functioning correctly"
 
 If:
-    robot has name 
-    problem is unknown
-    robot says, “If that’s what you call this.”
-Then:
-    set problem uncertain
-
-If:
-    problem is uncertain
+    goal is to diagnose problem
+    and I perceive problem is unknown
+    and I perceive robot's response is evasive
 Then:
     say, “Hey, now. What’s that all about?”
-    place hand on robot's shoulder
 
 If:
-    the robot says, “The Johnsons across the street bought a new robot”.
+    goal is to diagnose problem
+    and I perceive problem is unclear
 Then:
-    
+    say, "Go on"
 
- “Go on,” I coaxed.
+If:
+    goal is to diagnose problem
+    and I perceive problem is unknown
+    and I perceive robot is jealous
+Then:
+
 
  “I’ve seen it walking their kids to school and fixing their roof, and it’s got those extendable arms and a hedge-clipper accessory, and...”
 
