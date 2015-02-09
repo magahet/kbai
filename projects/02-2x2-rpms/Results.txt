@@ -1,0 +1,23 @@
+2x2 Basic Problems
+-----------
+2x2 Basic Problem 01:  Incorrect (5)
+2x2 Basic Problem 02:  Incorrect (3)
+2x2 Basic Problem 03:  Incorrect (1)
+2x2 Basic Problem 04:  Incorrect (4)
+2x2 Basic Problem 05:  Incorrect (1)
+2x2 Basic Problem 06:  Incorrect (3)
+2x2 Basic Problem 07:  Incorrect (5)
+2x2 Basic Problem 08:  Incorrect (2)
+2x2 Basic Problem 09:  Incorrect (6)
+2x2 Basic Problem 10:  Incorrect (6)
+2x2 Basic Problem 11:  Incorrect (4)
+2x2 Basic Problem 12:  Incorrect (3)
+2x2 Basic Problem 13:  Incorrect (5)
+2x2 Basic Problem 14:  Incorrect (2)
+2x2 Basic Problem 15:  Incorrect (6)
+2x2 Basic Problem 16:  Incorrect (6)
+2x2 Basic Problem 17:  Incorrect (3)
+2x2 Basic Problem 18:  Incorrect (2)
+2x2 Basic Problem 19:  Incorrect (6)
+2x2 Basic Problem 20:  Incorrect (4)
+
