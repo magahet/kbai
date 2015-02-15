@@ -1,3 +1,11 @@
+from SemanticNetworkGenerator import SemanticNetworkGenerator
+from FigureGenerator import FigureGenerator
+from FigureMatcher import (figuresMatch, findFigureMatch)
+import time
+import sys
+import random
+
+
 # Your Agent for solving Raven's Progressive Matrices. You MUST modify this file.
 #
 # You may also create and submit new files in addition to modifying this file.
@@ -7,6 +15,8 @@
 # def Solve(self,problem)
 #
 # These methods will be necessary for the project's main method to run.
+
+
 class Agent:
     # The default constructor for your Agent. Make sure to execute any
     # processing necessary before your Agent starts solving problems here.
@@ -14,7 +24,11 @@ class Agent:
     # Do not add any variables to this signature; they will not be used by
     # main().
     def __init__(self):
-        pass
+        self.answerIds = ['1', '2', '3', '4', '5', '6']
+        self.typeHandlers = {
+            '2x1': self.solve2x1,
+            '2x2': self.solve2x2,
+        }
 
     # The primary method for solving incoming Raven's Progressive Matrices.
     # For each problem, your Agent's Solve() method will be called. At the
@@ -39,5 +53,160 @@ class Agent:
     #
     # @param problem the RavensProblem your agent should solve
     # @return your Agent's answer to this problem
-    def Solve(self,problem):
-        return "6"
+    def Solve(self, problem, timeout=10, guess=True):
+        '''Solve problem and return answer choice.'''
+
+        print '=' * 80
+        print problem.name
+        print problem.problemType
+
+        return self.typeHandlers.get(problem.problemType,
+                                     lambda x: '')(problem, timeout=timeout,
+                                                   guess=guess)
+
+    def solve2x1(self, problem, timeout=10, guess=True):
+        # Initialize scores and current best answer.
+        bestAnswer = ''
+        lowestNetScore = sys.maxint
+        lowestFigScore = sys.maxint
+        lowestMatchScore = sys.maxint
+        lowestCToAnswerScore = sys.maxint
+        figureC = problem.figures.get('C')
+        answerChoices = {i: problem.figures.get(i) for i in self.answerIds}
+        startTime = time.time()
+
+        # Generate and evaluate each semantic network that describes the A:B
+        # relationship.
+        for semanticNetwork in SemanticNetworkGenerator(problem):
+            # Calculate the complexity of the transforms
+            netScore = semanticNetwork.score
+            print '-' * 80
+            print netScore, semanticNetwork
+
+            # Generate and evaluate each figure that can be created given
+            # figure C and the semantic network.
+            for figureX, figScore in FigureGenerator(figureC, semanticNetwork):
+                print '.' * 80
+                print 'FigureX:', figureX
+                # Find the closest match between the generated figure and the
+                # answer choices. Get the similarity score between the chosen
+                # answer and the generated figure.
+                answer, matchScore = findFigureMatch(figureX, answerChoices)
+
+                # Could not score or there is a better matching figure
+                if answer is None or matchScore > lowestMatchScore:
+                    continue
+
+                # Calculate the similarity between figure C and the chosen
+                # answer.
+                cToAnswerScore = figuresMatch(figureC,
+                                              answerChoices.get(answer, {}))
+
+                # Evaluate whether the current answer is better than the
+                # current best answer by comparing the various scores. These
+                # scores have a strict hierarchy.
+                if matchScore == lowestMatchScore:
+                    if netScore > lowestNetScore:
+                        continue
+                    if netScore == lowestNetScore:
+                        if figScore > lowestFigScore:
+                            continue
+                        if figScore == lowestFigScore:
+                            if cToAnswerScore > lowestCToAnswerScore:
+                                continue
+                print ('Answer: {} mScore: {} nScore: {} '
+                       'fScore: {} aScore: {}').format(answer, matchScore,
+                                                       netScore, figScore,
+                                                       cToAnswerScore)
+
+                # Set the current best scores
+                lowestNetScore = netScore
+                lowestMatchScore = matchScore
+                lowestFigScore = figScore
+                lowestCToAnswerScore = cToAnswerScore
+                bestAnswer = answer
+
+                # If the agent reaches the timeout limit, return the current
+                # best answer.
+                if time.time() > startTime + timeout:
+                    return bestAnswer
+
+        # If an answer could not be found, make a guess.
+        if not bestAnswer and guess:
+            bestAnswer = random.choice(self.answerIds)
+
+        return bestAnswer
+
+    def solve2x2(self, problem, timeout=10, guess=True):
+        return ''
+        # Initialize scores and current best answer.
+        bestAnswer = ''
+        lowestNetScore = sys.maxint
+        lowestFigScore = sys.maxint
+        lowestMatchScore = sys.maxint
+        lowestCToAnswerScore = sys.maxint
+        figureC = problem.figures.get('C')
+        answerChoices = {i: problem.figures.get(i) for i in self.answerIds}
+        startTime = time.time()
+
+        # Generate and evaluate each semantic network that describes the A:B
+        # relationship.
+        for semanticNetwork in SemanticNetworkGenerator(problem):
+            # Calculate the complexity of the transforms
+            netScore = semanticNetwork.score
+            print '-' * 80
+            print netScore, semanticNetwork
+
+            # Generate and evaluate each figure that can be created given
+            # figure C and the semantic network.
+            for figureX, figScore in FigureGenerator(figureC, semanticNetwork):
+                print '.' * 80
+                print 'FigureX:', figureX
+                # Find the closest match between the generated figure and the
+                # answer choices. Get the similarity score between the chosen
+                # answer and the generated figure.
+                answer, matchScore = findFigureMatch(figureX, answerChoices)
+
+                # Could not score or there is a better matching figure
+                if answer is None or matchScore > lowestMatchScore:
+                    continue
+
+                # Calculate the similarity between figure C and the chosen
+                # answer.
+                cToAnswerScore = figuresMatch(figureC,
+                                              answerChoices.get(answer, {}))
+
+                # Evaluate whether the current answer is better than the
+                # current best answer by comparing the various scores. These
+                # scores have a strict hierarchy.
+                if matchScore == lowestMatchScore:
+                    if netScore > lowestNetScore:
+                        continue
+                    if netScore == lowestNetScore:
+                        if figScore > lowestFigScore:
+                            continue
+                        if figScore == lowestFigScore:
+                            if cToAnswerScore > lowestCToAnswerScore:
+                                continue
+                print ('Answer: {} mScore: {} nScore: {} '
+                       'fScore: {} aScore: {}').format(answer, matchScore,
+                                                       netScore, figScore,
+                                                       cToAnswerScore)
+
+                # Set the current best scores
+                lowestNetScore = netScore
+                lowestMatchScore = matchScore
+                lowestFigScore = figScore
+                lowestCToAnswerScore = cToAnswerScore
+                bestAnswer = answer
+
+                # If the agent reaches the timeout limit, return the current
+                # best answer.
+                if time.time() > startTime + timeout:
+                    return bestAnswer
+
+        # If an answer could not be found, make a guess.
+        if not bestAnswer and guess:
+            bestAnswer = random.choice(self.answerIds)
+
+        return bestAnswer
