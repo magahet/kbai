@@ -1,19 +1,23 @@
-from CorrespondenceGenerator import CorrespondenceGeneratorWithAddRemove
+from CorrespondenceGenerator import (CorrespondenceGeneratorWithAddRemove,
+                                     CorrespondenceGenerator)
 from SemanticNetwork import SemanticNetwork
 
 
 class SemanticNetworkGenerator(object):
     '''A generator of semantic networks for RPMs.'''
 
-    def __init__(self, problem):
+    def __init__(self, problem, source='A', target='B'):
         '''Initialize the generator from a provided RPM'''
         self.problem = problem
+        self.source = source
+        self.target = target
 
     def __iter__(self):
-        figureA = self.problem.figures.get('A')
-        figureB = self.problem.figures.get('B')
+        figureA = self.problem.figures.get(self.source)
+        figureB = self.problem.figures.get(self.target)
         for objectMap in self.iterObjectAssignment(figureA, figureB):
-            semanticNetwork = SemanticNetwork(objectMap)
+            semanticNetwork = SemanticNetwork()
+            semanticNetwork.buildFromObjectMap(objectMap)
             yield semanticNetwork
             for altNetwork in semanticNetwork.generateAlternatives():
                 yield altNetwork
@@ -23,3 +27,44 @@ class SemanticNetworkGenerator(object):
         for objectMap in CorrespondenceGeneratorWithAddRemove(figureA.objects,
                                                               figureB.objects):
             yield objectMap
+
+
+class SemanticNetworkCombiner(object):
+    '''A combiner of semantic networks for RPMs.'''
+
+    def __init__(self, network1, network2):
+        '''Initialize the generator from two provided networks'''
+        self.network1 = network1
+        self.network2 = network2
+        self.attribHandlers = {
+            'rotate': lambda x, y: (x + y) % 360,
+        }
+
+    def __iter__(self):
+        for objectMap in CorrespondenceGenerator(
+                self.network1.objectIds, self.network2.objectIds):
+            positions, transforms = self.combineNetworks(objectMap)
+            semanticNetwork = SemanticNetwork(positions, transforms)
+            yield semanticNetwork
+            for altNetwork in semanticNetwork.generateAlternatives():
+                yield altNetwork
+
+    def combineNetworks(self, objectMap):
+        positions = self.network1.positions
+        transforms = {}
+        for newObjId, (objId1, objId2) in enumerate(objectMap):
+            transforms[newObjId] = {}
+            t1 = self.network1.transforms.get(objId1, {})
+            t2 = self.network2.transforms.get(objId2, {})
+            for attrib in set(t1.keys()).union(t2.keys()):
+                transforms[newObjId][attrib] = self.combineAttribs(
+                    attrib, t1.get(attrib), t2.get(attrib))
+        return positions, transforms
+
+    def combineAttribs(self, attrib, t1, t2):
+        if None in (t1, t2):
+            return t1 if t1 is not None else t2
+        elif attrib in self.attribHandlers:
+            return self.attribHandlers[attrib](t1, t2)
+        else:
+            return t1

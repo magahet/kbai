@@ -25,7 +25,7 @@ from ProblemSet import ProblemSet
 # project will be graded using our own version of this file.
 
 
-def main(problemSet, problems, root='Problems'):
+def main(problemSet, problems, root='Problems', ignore_errors='False'):
     sets = []  # The variable 'sets' stores multiple problem sets.
             # Each problem set comes from a different folder in /Problems/
             # Additional sets of problems will be used when grading projects.
@@ -53,9 +53,8 @@ def main(problemSet, problems, root='Problems'):
                                         # Note that each run of the program will overwrite the previous results.
                                         # Do not write anything else to Results.txt during execution of the program.
     for set in sets:
-        #print set.name
-        results.write("%s\n" % set.getName(
-        ))   # Your agent will solve one problem set at a time.
+        print '{}\n-----------\n'.format(set.name)
+        results.write("%s\n" % set.getName())   # Your agent will solve one problem set at a time.
         results.write("%s\n" % "-----------")   # Problem sets will be individually categorized in the results file.
 
         for problem in set.getProblems():   # Your agent will solve one problem at a time.
@@ -68,7 +67,9 @@ def main(problemSet, problems, root='Problems'):
             result = problem.getName() + ": " + problem.getGivenAnswer() + " " + problem.getCorrect() + " (" + problem.correctAnswer + ")"
 
             results.write("%s\n" % result)
+            print "{}\n".format(result)
         results.write("\n")
+        print '\n'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

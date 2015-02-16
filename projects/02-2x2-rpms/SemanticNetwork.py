@@ -24,7 +24,7 @@ class SemanticNetwork(object):
         'overlaps'
     ])
 
-    def __init__(self, objectMap):
+    def __init__(self, positions={}, transforms={}):
         '''Initialize the network using a given objectMap.'''
         self.attribHandlers = {
             'shape': self.shapeChange,
@@ -33,8 +33,8 @@ class SemanticNetwork(object):
             'angle': self.angleChange,
             'vertical-flip': self.verticalFlip,
         }
-        self.positions = self.parsePositions(objectMap)
-        self.transforms = self.parseTransforms(objectMap)
+        self.positions = positions
+        self.transforms = transforms
 
     def __repr__(self):
         return '''SemanticNetwork(positions={}, transformations={})'''.format(
@@ -53,6 +53,10 @@ class SemanticNetwork(object):
             for name, _ in transforms.iteritems():
                 score += self.differenceWeights.get(name, 1)
         return score
+
+    def buildFromObjectMap(self, objectMap):
+        self.positions = self.parsePositions(objectMap)
+        self.transforms = self.parseTransforms(objectMap)
 
     def generateAlternatives(self):
         # Horizontal flips
@@ -155,8 +159,10 @@ class SemanticNetwork(object):
             return ('change size', (before, after))
 
     def angleChange(self, before, after):
+        before = int(before) if before.isdigit() else 0
+        after = int(after) if after.isdigit() else 0
         if before != after:
-            return ('rotate', int(after) - int(before))
+            return ('rotate', after - before)
 
     def verticalFlip(self, before, after):
         if before != after:
