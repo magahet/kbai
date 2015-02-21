@@ -73,6 +73,17 @@ class FigureGenerator(object):
                 return ('angle', '135')
             elif figObj.get('angle') == '315':
                 return ('angle', '45')
+        if figObj.get('shape') == 'right-triangle':
+            if 'vertical-flip' in figObj:
+                del figObj['vertical-flip']
+            if figObj.get('angle') == '0':
+                return ('angle', '0')
+            elif figObj.get('angle') == '90':
+                return ('angle', '0')
+            elif figObj.get('angle') == '180':
+                return ('angle', '270')
+            elif figObj.get('angle') == '270':
+                return ('angle', '180')
         return ('vertical-flip', value)
 
     @staticmethod
@@ -87,6 +98,15 @@ class FigureGenerator(object):
                 return ('angle', '315')
             elif figObj.get('angle') == '315':
                 return ('angle', '225')
+        if figObj.get('shape') == 'right-triangle':
+            if figObj.get('angle') == '0':
+                return ('angle', '270')
+            elif figObj.get('angle') == '270':
+                return ('angle', '0')
+            elif figObj.get('angle') == '180':
+                return ('angle', '90')
+            elif figObj.get('angle') == '90':
+                return ('angle', '180')
         return ('flip', '')
 
     def transformFigure(self, objectMap):

@@ -88,6 +88,33 @@ class SemanticNetwork(object):
                 self.transforms[objId]['rotate'] = rotation
                 del self.transforms[objId]['vertical-flip']
 
+        # right triagle
+        for objId in self.objectIds:
+            beforeShape = self.figures.get('before', {}).get(objId, {}).get('shape')
+            afterShape = self.figures.get('after', {}).get(objId, {}).get('shape')
+            if (beforeShape, afterShape) != ('right-triangle', 'right-triangle'):
+                continue
+            beforeAngle = self.figures.get('before', {}).get(objId, {}).get('angle')
+            afterAngle = self.figures.get('after', {}).get(objId, {}).get('angle')
+            if (beforeAngle, afterAngle) in (('0', '270'), ('270', '0'), ('90', '180'), ('180', '90')):
+                if 'rotate' not in self.transforms[objId]:
+                    continue
+                rotation = self.transforms[objId]['rotate']
+                del self.transforms[objId]['rotate']
+                self.transforms[objId]['flip'] = 'horizontal'
+                yield self
+                self.transforms[objId]['rotate'] = rotation
+                del self.transforms[objId]['flip']
+            if (beforeAngle, afterAngle) in (('0', '90'), ('90', '0'), ('180', '270'), ('270', '180')):
+                if 'rotate' not in self.transforms[objId]:
+                    continue
+                rotation = self.transforms[objId]['rotate']
+                del self.transforms[objId]['rotate']
+                self.transforms[objId]['vertical-flip'] = 'yes'
+                yield self
+                self.transforms[objId]['rotate'] = rotation
+                del self.transforms[objId]['vertical-flip']
+
         # Horizontal flips
         flips = [objId for
                  objId, transforms in self.transforms.iteritems() if
