@@ -142,6 +142,8 @@ class FigureGenerator(object):
                 if attribute in attributes or attribute in self.positions:
                     continue
                 attributes[attribute] = figObj.get(attribute)
+            if attributes.get('shape', '') == 'circle' and 'angle' in attributes:
+                attributes['angle'] = '0'
             figure[figObjId] = attributes
         return figure, self.positionsMatch(netToFigObjMap)
 
