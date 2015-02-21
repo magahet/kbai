@@ -51,12 +51,15 @@ class FigureGenerator(object):
 
     @staticmethod
     def fill(figObj, value):
+        if value == ['no']:
+            return ('fill', 'no')
         fillList = [f for f in
-                    figObj.get('fill', '').split(',') if
-                    f not in ['no']]
+                    figObj.get('fill', '').split(',')]
         for fill in value:
             if fill not in fillList:
                 fillList.append(fill)
+        if 'no' in fillList and len(fillList) > 1:
+            fillList.remove('no')
         return ('fill', ','.join(fillList))
 
     @staticmethod

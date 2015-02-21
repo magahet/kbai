@@ -67,6 +67,13 @@ class SemanticNetworkCombiner(object):
             transforms[newObjId] = {}
             t1 = self.network1.transforms.get(objId1, {})
             t2 = self.network2.transforms.get(objId2, {})
+            #print t1, t2
+            if 'add' in t1:
+                transforms[objId1 + 10] = t1
+                t1 = {}
+            if 'add' in t2:
+                transforms[objId2 + 20] = t2
+                t2 = {}
             #print 't1', t1
             #print 't2', t2
             for attrib in set(t1.keys()).union(t2.keys()):
