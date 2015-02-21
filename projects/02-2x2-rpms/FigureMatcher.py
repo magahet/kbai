@@ -1,5 +1,5 @@
 import sys
-from CorrespondenceGenerator import CorrespondenceGenerator
+from CorrespondenceGenerator import CorrespondenceGeneratorWithAddRemove
 
 
 def parseFigure(figureObj):
@@ -31,7 +31,7 @@ def figuresMatch(figure1, figure2):
     if figure1 == figure2:
         return 0
     bestScore = sys.maxint
-    for objectMap in CorrespondenceGenerator(figure1.keys(), figure2.keys()):
+    for objectMap in CorrespondenceGeneratorWithAddRemove(figure1.keys(), figure2.keys()):
         #print '=' * 80
         #print objectMap
         score = 0
@@ -50,7 +50,7 @@ def remapReferences(obj, objMap):
     for attrib in obj:
         if attrib in ['inside', 'above', 'left-of']:
             oldValues = obj[attrib].split(',')
-            newObj[attrib] = ','.join(sorted([objMap[v] for v in oldValues if v in objMap]))
+            newObj[attrib] = ','.join(sorted([objMap[v] for v in oldValues if v in objMap and objMap[v] is not None]))
         else:
             newObj[attrib] = obj[attrib]
     return newObj

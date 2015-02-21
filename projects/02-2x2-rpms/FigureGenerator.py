@@ -1,4 +1,4 @@
-from CorrespondenceGenerator import CorrespondenceGenerator
+from CorrespondenceGenerator import CorrespondenceGeneratorWithAddRemove
 
 
 class FigureGenerator(object):
@@ -20,8 +20,12 @@ class FigureGenerator(object):
         }
 
     def __iter__(self):
-        for objectMap in CorrespondenceGenerator(self.figure.keys(),
-                                                 self.semanticNetwork.objectIds):
+        #print self.figure.keys()
+        #print self.semanticNetwork.objectIds
+        for objectMap in CorrespondenceGeneratorWithAddRemove(
+            self.figure.keys(),
+                self.semanticNetwork.objectIds):
+            #print objectMap
             result = self.transformFigure(objectMap)
             if result is None:
                 continue
@@ -59,12 +63,24 @@ class FigureGenerator(object):
         netToFigObjMap = {
             netObjId: figObjId for
             figObjId, netObjId in objectMap if
-            ('remove', None) not in self.semanticNetwork.transforms.get(netObjId)
+            netObjId is not None and 'remove' not in self.semanticNetwork.transforms.get(netObjId)
         }
-        for figObjId, netObjId in objectMap:
-            if ('remove', None) in self.semanticNetwork.transforms.get(netObjId):
+        for num, (figObjId, netObjId) in enumerate(objectMap):
+            if 'remove' in self.semanticNetwork.transforms.get(netObjId, {}):
+                continue
+            if 'add' in self.semanticNetwork.transforms.get(netObjId, {}):
+                figure[str(num)] = {}
+                for attrib, value in self.semanticNetwork.transforms.get(netObjId, {}).get('add', {}).iteritems():
+                    if attrib in self.positions:
+                        if isinstance(value, list):
+                            #print 'blah', [netToFigObjMap.get(o, '') for o in value]
+                            figure[str(num)][attrib] = ','.join(sorted([netToFigObjMap.get(o, '') for o in value if netToFigObjMap.get(o, '') is not None]))
+                    else:
+                        figure[str(num)][attrib] = value
                 continue
             figObj = self.figure.get(figObjId)
+            if figObj is None or 'shape' not in figObj:
+                continue
             attributes = {}
             transforms = self.semanticNetwork.transforms.get(netObjId, {})
             for transform, transformValue in transforms.iteritems():
@@ -77,14 +93,13 @@ class FigureGenerator(object):
                         attributes[attribute] = value
                     except:
                         return None
-            if attributes.get('shape', '') != 'any' and 'shape' not in attributes:
-                attributes['shape'] = figObj.get('shape')
-            positions = self.semanticNetwork.positions['after'].get(netObjId)
+            positions = self.semanticNetwork.positions['after'].get(netObjId, {})
             for position, objIds in positions.iteritems():
+                positionList = [netToFigObjMap[objId] for
+                                objId in objIds if
+                                objId is not None and objId in netToFigObjMap]
                 attributes[position] = ','.join(
-                    sorted([netToFigObjMap[objId] for
-                            objId in objIds if
-                            objId in netToFigObjMap]))
+                    sorted([p for p in positionList if p is not None]))
             for attribute in figObj:
                 if attribute in attributes or attribute in self.positions:
                     continue

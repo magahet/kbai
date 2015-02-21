@@ -120,7 +120,10 @@ class SemanticNetwork(object):
         transformList = {}
         for objId, (beforeObj, afterObj) in enumerate(objectMap):
             if beforeObj is None:
-                transformList[objId] = {'add': None}
+                figure = {k: v for k, v in self.parseAttribs(afterObj).iteritems() if
+                          k not in self.positionSet}
+                figure.update(self.parsePositions(objectMap).get('after', {}).get(objId, {}))
+                transformList[objId] = {'add': figure}
                 continue
             elif afterObj is None:
                 transformList[objId] = {'remove': None}

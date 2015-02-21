@@ -96,7 +96,7 @@ class Agent:
             # figure C and the semantic network.
             for figureX, figScore in FigureGenerator(figureC, semanticNetwork):
                 #print '.' * 80
-                #print 'FigureX:', figureX
+                print 'FigureX:', figureX
                 # Find the closest match between the generated figure and the
                 # answer choices. Get the similarity score between the chosen
                 # answer and the generated figure.
@@ -123,10 +123,10 @@ class Agent:
                         if figScore == lowestFigScore:
                             if cToAnswerScore > lowestCToAnswerScore:
                                 continue
-                #print ('Answer: {} mScore: {} nScore: {} '
-                       #'fScore: {} aScore: {}').format(answer, matchScore,
-                                                       #netScore, figScore,
-                                                       #cToAnswerScore)
+                print ('Answer: {} mScore: {} nScore: {} '
+                       'fScore: {} aScore: {}').format(answer, matchScore,
+                                                       netScore, figScore,
+                                                       cToAnswerScore)
 
                 # Set the current best scores
                 lowestNetScore = netScore
@@ -173,14 +173,14 @@ class Agent:
             for semanticNetwork in SemanticNetworkCombiner(bNetwork, cNetwork):
                 # Calculate the complexity of the transforms
                 netScore = semanticNetwork.score
-                #print '-' * 80
-                #print netScore, semanticNetwork
+                print '-' * 80
+                print netScore, semanticNetwork
 
                 # Generate and evaluate each figure that can be created given
                 # figure C and the semantic network.
                 for figureX, figScore in FigureGenerator(figureA, semanticNetwork):
-                    #print '.' * 80
-                    #print 'FigureX:', figureX
+                    print '.' * 80
+                    print 'FigureX:', figureX
                     # Find the closest match between the generated figure and the
                     # answer choices. Get the similarity score between the chosen
                     # answer and the generated figure.
@@ -210,10 +210,10 @@ class Agent:
                             if figScore == lowestFigScore:
                                 if sourceToAnswerScore > lowestSourceToAnswerScore:
                                     continue
-                    #print ('Answer: {} mScore: {} nScore: {} '
-                           #'fScore: {} aScore: {}').format(answer, matchScore,
-                                                           #netScore, figScore,
-                                                           #sourceToAnswerScore)
+                    print ('Answer: {} mScore: {} nScore: {} '
+                           'fScore: {} aScore: {}').format(answer, matchScore,
+                                                           netScore, figScore,
+                                                           sourceToAnswerScore)
 
                     # Set the current best scores
                     lowestNetScore = netScore
