@@ -1,5 +1,4 @@
-from CorrespondenceGenerator import (CorrespondenceGeneratorWithAddRemove,
-                                     CorrespondenceGenerator)
+from CorrespondenceGenerator import CorrespondenceGeneratorWithAddRemove
 from SemanticNetwork import SemanticNetwork
 
 
@@ -50,6 +49,15 @@ class SemanticNetworkCombiner(object):
             yield semanticNetwork
             for altNetwork in semanticNetwork.generateAlternatives():
                 yield altNetwork
+        # missing original net against other net alternatives
+        for altNet1 in self.network1.generateAlternatives():
+            for altNet2 in self.network2.generateAlternatives():
+                for objectMap in CorrespondenceGeneratorWithAddRemove(altNet1.objectIds, altNet2.objectIds):
+                    positions, transforms = self.combineNetworks(objectMap)
+                    semanticNetwork = SemanticNetwork(positions, transforms)
+                    yield semanticNetwork
+                    for altNetwork in semanticNetwork.generateAlternatives():
+                        yield altNetwork
 
     def combineNetworks(self, objectMap):
         positions = self.network1.positions

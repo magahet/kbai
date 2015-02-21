@@ -16,7 +16,8 @@ class FigureGenerator(object):
             'change size': self.changeSize,
             'rotate': self.rotate,
             'change shape': lambda x, v: ('shape', v),
-            'vertical-flip': lambda x, v: ('vertical-flip', v),
+            'vertical-flip': self.verticalFlip,
+            'flip': self.horizontalFlip,
         }
 
     def __iter__(self):
@@ -58,6 +59,36 @@ class FigureGenerator(object):
                 fillList.append(fill)
         return ('fill', ','.join(fillList))
 
+    @staticmethod
+    def verticalFlip(figObj, value):
+        # pacman
+        if figObj.get('shape') == 'Pac-Man':
+            if 'vertical-flip' in figObj:
+                del figObj['vertical-flip']
+            if figObj.get('angle') == '45':
+                return ('angle', '315')
+            elif figObj.get('angle') == '135':
+                return ('angle', '225')
+            elif figObj.get('angle') == '225':
+                return ('angle', '135')
+            elif figObj.get('angle') == '315':
+                return ('angle', '45')
+        return ('vertical-flip', value)
+
+    @staticmethod
+    def horizontalFlip(figObj, value):
+        # pacman
+        if figObj.get('shape') == 'Pac-Man':
+            if figObj.get('angle') == '45':
+                return ('angle', '135')
+            elif figObj.get('angle') == '135':
+                return ('angle', '45')
+            elif figObj.get('angle') == '225':
+                return ('angle', '315')
+            elif figObj.get('angle') == '315':
+                return ('angle', '225')
+        return ('flip', '')
+
     def transformFigure(self, objectMap):
         figure = {}
         netToFigObjMap = {
@@ -87,11 +118,18 @@ class FigureGenerator(object):
                 if transform not in self.transformHandlers:
                     continue
                 else:
+                    #print transform, figObj, transformValue
+                    #attribute, value = self.transformHandlers[transform](
+                        #figObj, transformValue)
+                    #attributes[attribute] = value
+                    #figObj[attribute] = value
                     try:
                         attribute, value = self.transformHandlers[transform](
                             figObj, transformValue)
                         attributes[attribute] = value
+                        figObj[attribute] = value
                     except:
+                        #print 'could not apply transform handlers'
                         return None
             positions = self.semanticNetwork.positions['after'].get(netObjId, {})
             for position, objIds in positions.iteritems():

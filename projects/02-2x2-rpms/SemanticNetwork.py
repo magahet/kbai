@@ -24,7 +24,7 @@ class SemanticNetwork(object):
         'overlaps'
     ])
 
-    def __init__(self, positions={}, transforms={}):
+    def __init__(self, positions={}, transforms={}, shapes={}):
         '''Initialize the network using a given objectMap.'''
         self.attribHandlers = {
             'shape': self.shapeChange,
@@ -35,6 +35,7 @@ class SemanticNetwork(object):
         }
         self.positions = positions
         self.transforms = transforms
+        self.figures = {}
 
     def __repr__(self):
         return '''SemanticNetwork(positions={}, transformations={})'''.format(
@@ -57,8 +58,36 @@ class SemanticNetwork(object):
     def buildFromObjectMap(self, objectMap):
         self.positions = self.parsePositions(objectMap)
         self.transforms = self.parseTransforms(objectMap)
+        self.figures = self.parseFigures(objectMap)
 
     def generateAlternatives(self):
+        # pacman
+        for objId in self.objectIds:
+            beforeShape = self.figures.get('before', {}).get(objId, {}).get('shape')
+            afterShape = self.figures.get('after', {}).get(objId, {}).get('shape')
+            if (beforeShape, afterShape) != ('Pac-Man', 'Pac-Man'):
+                continue
+            beforeAngle = self.figures.get('before', {}).get(objId, {}).get('angle')
+            afterAngle = self.figures.get('after', {}).get(objId, {}).get('angle')
+            if (beforeAngle, afterAngle) in (('45', '135'), ('135', '45'), ('225', '315'), ('315', '225')):
+                if 'rotate' not in self.transforms[objId]:
+                    continue
+                rotation = self.transforms[objId]['rotate']
+                del self.transforms[objId]['rotate']
+                self.transforms[objId]['flip'] = 'horizontal'
+                yield self
+                self.transforms[objId]['rotate'] = rotation
+                del self.transforms[objId]['flip']
+            if (beforeAngle, afterAngle) in (('45', '315'), ('315', '45'), ('225', '135'), ('135', '225')):
+                if 'rotate' not in self.transforms[objId]:
+                    continue
+                rotation = self.transforms[objId]['rotate']
+                del self.transforms[objId]['rotate']
+                self.transforms[objId]['vertical-flip'] = 'yes'
+                yield self
+                self.transforms[objId]['rotate'] = rotation
+                del self.transforms[objId]['vertical-flip']
+
         # Horizontal flips
         flips = [objId for
                  objId, transforms in self.transforms.iteritems() if
@@ -142,9 +171,17 @@ class SemanticNetwork(object):
             transformList[objId] = transforms
         return transformList
 
+    def parseFigures(self, objectMap):
+        before = {}
+        after = {}
+        for objId, (beforeObj, afterObj) in enumerate(objectMap):
+            before[objId] = self.parseAttribs(beforeObj)
+            after[objId] = self.parseAttribs(afterObj)
+        return {'before': before, 'after': after}
+
     @staticmethod
     def parseAttribs(obj):
-        return {a.name: a.value for a in obj.attributes}
+        return {} if obj is None else {a.name: a.value for a in obj.attributes}
 
     def shapeChange(self, before, after):
         if before != after:
