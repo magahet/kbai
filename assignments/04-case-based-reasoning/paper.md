@@ -4,6 +4,15 @@
 % February 6th, 2015
 
 
+1.  In this story, the protagonist performs a kind of diagnosis and repair of Henry the robot. Illustrate the process of case-based reasoning for the diagnosis task in the story. Invent percepts, actions and cases as needed (with at least 3 percepts, 3 actions, 3 cases). Demonstrate how the case-based reasoning process would work for this story (that is, given Henry’s symptoms, it would result in the same diagnosis as in the story). Show at least the steps of case retrieval and adaptation. 
+
+2. What, if any, are the advantages of using rule-based reasoning for the diagnosis task in this story over case-based reasoning? What, if any, are the advantages of using case-based reasoning for the diagnosis task over rule-based reasoning?
+
+3. In Q1 and Q2 above, we have not made explicit whether we are talking about the cognition of the (apparently human) protagonist or an expert robot that makes home visits to diagnose and repair household robots like Henry.  Does this matter? That is, would you prefer one set of answers for modeling human cognition and another set for designing an expert knowledge system? Why, or why not?
+
+
+
+
 ## Introduction
 
 We will utilize Frames to represent the situations illustrated in a number of story excerpts. We will then create a production system for the diagnosis of robot related troubles. Finally, we will examine the concept of Chunking, and how long-term memory in a production system can be adapted, using episodic memory, to handle impasses.
