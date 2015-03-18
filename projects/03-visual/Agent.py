@@ -1,7 +1,7 @@
 import random
 from PIL import Image
-import numpy as np
 import utils
+import numpy as np
 
 
 # Your Agent for solving Raven's Progressive Matrices. You MUST modify this file.
@@ -25,9 +25,94 @@ class Agent:
         self.answer_ids = ('1', '2', '3', '4', '5', '6')
         self.type_handlers = {
             '2x1 (Image)': self.solve2x1,
-            '2x2 (Image)': self.solve2x1,
+            '2x2 (Image)': self.solve2x2,
             '3x3 (Image)': self.solve3x3,
         }
+        self.voters = {
+            #'pixel change': self.rank_with_pixel_change,
+            #'key point change': self.rank_with_key_point_change,
+            'quadrant pixel change': self.rank_with_quadrant_pixel_change,
+        }
+
+    @staticmethod
+    def get_figures(problem):
+        figures_metadata = problem.getFigures()
+        figures = {}
+        for _id, figure in figures_metadata.iteritems():
+            figures[_id] = Image.open(figure.getPath()).convert('1')
+        return figures
+
+    @classmethod
+    def get_quadrant_pixel_count(cls, image):
+        height, width = image.size
+        quadrants = (
+            (0, 0, width / 2, height / 2),
+            (width / 2, 0, width, height / 2),
+            (0, height / 2, width / 2, height),
+            (width / 2, height / 2, width, height)
+        )
+        return np.asarray([cls.get_pixel_count(image.crop(box)) for
+                           box in quadrants])
+
+    @staticmethod
+    def get_pixel_count(image, color=0):
+        for count, pixel_color in image.getcolors():
+            if pixel_color == color:
+                return count
+        return 0
+
+    def rank_with_quadrant_pixel_change(self, problem, sample_src, sample_dst,
+                                        target):
+        figures = self.get_figures(problem)
+        black_pixel_counts = {k: self.get_quadrant_pixel_count(i) for
+                              k, i in figures.iteritems()}
+        target_vector = black_pixel_counts[sample_dst] - black_pixel_counts[sample_src]
+        answers = {k: utils.distance(v - black_pixel_counts[target],
+                                     target_vector) for
+                   k, v in black_pixel_counts.iteritems() if
+                   k in self.answer_ids}
+        return utils.sorted_nn(answers, 0)
+
+    def rank_with_pixel_change(self, problem, sample_src, sample_dst, target):
+        figures = self.get_figures(problem)
+        black_pixel_counts = {k: i.getcolors()[0][0] for
+                              k, i in figures.iteritems()}
+        difference = utils.get_target_change(black_pixel_counts, sample_src,
+                                             sample_dst, target)
+        answers = {k: v for
+                   k, v in black_pixel_counts.iteritems() if
+                   k in self.answer_ids}
+        return utils.sorted_nn(answers, difference)
+
+    def rank_with_key_point_change(self, problem, sample_src, sample_dst, target):
+        figures_metadata = problem.getFigures()
+        key_points = {k: len(utils.get_key_points(f.getPath())) for
+                      k, f in figures_metadata.iteritems()}
+        difference = utils.get_target_change(key_points, sample_src,
+                                             sample_dst, target)
+        answers = {k: v for
+                   k, v in key_points.iteritems() if
+                   k in self.answer_ids}
+        return utils.sorted_nn(answers, difference)
+
+    def solve2x1(self, problem):
+        votes = [[k for k, _ in voter(problem, 'A', 'B', 'C')] for
+                 voter in self.voters.itervalues()]
+        answer = utils.first_consensus(votes)
+        print problem.correctAnswer, answer
+        return str(answer)
+
+    def solve2x2(self, problem):
+        votes = [[k for k, _ in voter(problem, 'A', 'B', 'C')] for
+                 voter in self.voters.itervalues()]
+        #votes.extend([[k for k, _ in voter(problem, 'A', 'C', 'B')] for
+                      #voter in self.voters.itervalues()])
+        answer = utils.first_consensus(votes)
+        print problem.correctAnswer, answer
+        return str(answer)
+
+    def solve3x3(self, problem):
+        return "None"
 
     # The primary method for solving incoming Raven's Progressive Matrices.
     # For each problem, your Agent's Solve() method will be called. At the
@@ -57,53 +142,3 @@ class Agent:
         if problem_type not in self.type_handlers:
             return random.choice(self.answer_ids)
         return self.type_handlers[problem_type](problem)
-
-    def solve2x1(self, problem):
-        figures_metadata = problem.getFigures()
-        figures = {}
-        for _id, figure in figures_metadata.iteritems():
-            image = Image.open(figure.getPath()).convert('1')
-            figures[_id] = np.asarray(image.getdata())
-        white_pixel_counts = {k: np.count_nonzero(a) for
-                              k, a in figures.iteritems()}
-        kps = {k: len(utils.get_key_points(f.getPath())) for
-               k, f in figures_metadata.iteritems()}
-        target = ((white_pixel_counts['B'] * white_pixel_counts['C']) /
-                  white_pixel_counts['A'])
-        target_kp = (kps['B'] * kps['C']) / kps['A']
-        white_pixel_counts_answers = {k: v for
-                                      k, v in white_pixel_counts.iteritems() if
-                                      k in self.answer_ids}
-        kp_answers = {k: v for
-                      k, v in kps.iteritems() if
-                      k in self.answer_ids}
-        pc = sorted_nn(white_pixel_counts_answers, target)
-        kp = sorted_nn(kp_answers, target_kp)
-        answer = first_match([k for k, _ in pc], [k for k, _ in kp])
-        print problem.correctAnswer, answer
-        return str(answer)
-
-    def solve2x2(self, problem):
-        return "None"
-
-    def solve3x3(self, problem):
-        return "None"
-
-
-def sorted_nn(obj, target):
-    return sorted(obj.items(), key=lambda x: abs(x[1] - target))
-
-
-def first_match(list1, list2):
-    closed = set([])
-    while list1 and list2:
-        if list1:
-            item = list1.pop(0)
-            if item in closed:
-                return item
-            closed.add(item)
-        if list2:
-            item = list2.pop(0)
-            if item in closed:
-                return item
-            closed.add(item)

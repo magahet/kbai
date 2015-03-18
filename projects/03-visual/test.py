@@ -72,6 +72,7 @@ def main(problemSet, problems, root='Problems (Image Data)', ignore_errors='Fals
             results.write("%s\n" % result)
         results.write("\n")
     print '{}/{}'.format(correct, count)
+    print '{}/{}'.format(int(correct * 1.65), count * 2)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
