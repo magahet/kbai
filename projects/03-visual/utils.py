@@ -5,12 +5,9 @@ import collections
 import numpy as np
 
 
-def get_key_points(path):
-    '''Get key points from image.
-    Takes a filepath to an image'''
-    img = cv2.imread(path)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    corners = cv2.goodFeaturesToTrack(gray, 25, 0.01, 10)
+def get_key_points(image):
+    '''Get key points from image.'''
+    corners = cv2.goodFeaturesToTrack(image, 25, 0.01, 10)
     if corners is None:
         return []
     corners = np.int0(corners)
@@ -21,6 +18,8 @@ def get_key_points(path):
 
 
 def get_target_change(obj, src, dst, target):
+    if obj[src] == 0:
+        obj[src] = 1
     return (obj[dst] * obj[target]) / obj[src]
 
 
