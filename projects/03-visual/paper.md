@@ -7,20 +7,14 @@
 \makeatother
 
 
-describing the way your algorithm works, its relative strengths, its relative weaknesses, its efficiency, its relationship with human cognition, and the different challenges and opportunities in solving problems visually rather than verbally.
-
-In addition to your agent, you should also write and submit a design report of roughly 1500 words. This design report should do a number of things. First, it should describe the reasoning your agent uses. How does it work? Second, it should describe how the agent comes to some of its correct answers. Third, it should describe why your agent makes some of the mistakes it does. Fourth, it should describe what could be done to improve the agent if you had more time, resources, or processing power. Fifth, it should describe the unique challenges and opportunities in visual reasoning compared to verbal reasoning. Your design report can include diagrams in addition to the ~1500 words.
-
-
-
 ## Introduction
 
-We will describe the design of an AI agent built to solve 2x1 and 2x2 visual analogy problems given images rather than object descriptions. This will include details on the agent's strengths, weaknesses, efficiency, and relationship with human cognition.
+We will explore the design of an AI agent built to solve 2x1 and 2x2 visual analogy problems given images rather than object descriptions. This will include details on the agent's strengths, weaknesses, efficiency, and the how it's methodology compares to that of human cognition.
 
 
 ## Visual vs. Propositional Approaches
 
-Given visual input rather than descriptive data provides both challenges and opportunities for our AI agent. On one hand, propositional reasoning is made more difficult as we would first have to translate pixel-based information into a descriptive model of object types, sizes, and inter-relationships.
+Processing visual input rather than descriptive data provides both challenges and opportunities for our agent. On one hand, propositional reasoning is made more difficult, as we first have to translate pixel-based information into a descriptive model of object types, sizes, and inter-relationships.
 
 On the other hand, visual input allows us to broaden our agent's approach to understanding the inter-figure relationships and simplifies the application of transformations that should be applied to the entire figure. For example, figure \ref{2x2BasicProblem16} shows a difficult problem to solve with propositional reasoning. First, we would have to reason that the rotation of the single triangle in frames A and B should be applied to all three triangles in C. Second, we would need to model how rotating all three triangles would affect their spatial relationships. Third, we would have to address the correspondence problem between comparing triangles in frame C and the answer frames.
 
@@ -28,7 +22,7 @@ On the other hand, visual input allows us to broaden our agent's approach to und
 
 These complexities are avoided altogether with a visual approach. Once we observe that the transformation from A to B is a 90$^{\circ}$ rotation, it is trivial to apply the same rotation to frame C and compare the result to the answer choices. There is no need to teach the agent the concepts of triangles, changes in spatial relationships, or object correspondence.
 
-The visual approach, for this example, seems to match much more closely to human cognition. We observe the rotation in the example frames and apply it, effortlessly, to frame C. We do not need to enumerate the spatial relationship dynamics between the three triangles in order to rotate the image.
+The visual approach, for this example, seems to match much more closely to human cognition than the propositional approach. We observe the rotation in the example frames and apply it, effortlessly, to frame C. We do not need to enumerate the spatial relationship dynamics between the three triangles in order to rotate the image.
 
 This example illustrates the comparative strengths of the visual approach to solving RPMs. In the following sections, we will examine a visual heuristic algorithm that solves better than half of the provided RPM test cases with simplistic reasoning and no prior understanding of shapes, spatial relationships, or transformation models.
 
@@ -45,11 +39,11 @@ Our agent performs the following steps for each problem:
 
 ### Example
 
-Figure \ref{2x2BasicProblem18} illustrates our agent's heuristic algorithm. 
+We will use the problem in figure \ref{2x2BasicProblem18} to illustrate our agent's heuristic algorithm.
 
 ![2x2BasicProblem18\label{2x2BasicProblem18}](2x2BasicProblem18.PNG)
 
-The process of quantifying the visual data is shown in the following output. The first vector represents the black pixel change from frame A to B. Each vector after that shows the black pixel change from frame C to each answer choice. The following two numbers are the distance from the A:B change vector to the C:X transition vector. The first number is the distance between the signed vectors and the second is the distance between the unsigned vectors. Having both signed and unsigned changes is used in certain edge cases, including this example. We see from the figure that although a given quadrant in frame C should have the same number of pixels change, the color change is opposite that of the A to B change.
+The process of quantifying the visual data is shown in the following output:
 
 ```
 2x2 Basic Problem 18
@@ -61,6 +55,10 @@ t [ 1588 -1558  1678 -1644]
 4 [-2271   978 -2244   966] 6596 1258
 6 [ -646   944 -2240  -646] 5253 1605
 ```
+
+The first vector represents the black pixel change from frame A to B. Each vector after that shows the black pixel change from frame C to each answer choice. The two numbers that follow these vectors are the distance from the A:B change vector to the C:X transition vector. The first number is the distance between the signed vectors and the second is the distance between the unsigned vectors.
+
+Having both signed and unsigned changes is useful in certain edge cases, including this example. We see from the figure that although a given quadrant in frame C should have the same number of pixels change, the color change is opposite that of the A to B change.
 
 We see that the A to B transition is quantified in this way:
 
@@ -88,12 +86,12 @@ In this instance, and a few others, the fact that we compare the un-normalized v
 
 It remains an area of improvement to find a process to utilize proportional change metrics, or even completely different visual methods, on problems our agent knows the default method would perform poorly on. For this specific problem, we may have been able to decide to use proportional metrics based on the fact that each quadrant's pixel count and change are symmetric. We could add a rule that in such cases, the agent should utilize a reasoning method with a better chance at success.
 
-In cases where our agent was unable to find a truly distinct answer choice, it was still able to narrow the candidate solutions to just a few. In these instances, a randomized guess among two answer choices has a much higher probability of success. This highlights the importance of utilizing multiple combined methods to rank solutions and collectively make answer decisions. It also illustrates another connection to human reasoning. Our agent does not net stuck if it cannot find a perfect match. It is robust and will, as a human would, venture an educated guess after rejecting obviously incorrect answers.
+In cases where our agent was unable to find a truly distinct answer choice, it was still able to narrow the candidate solutions to just a few. In these instances, a randomized guess among two answer choices has a much higher probability of success. This highlights the importance of utilizing multiple combined methods to rank solutions and collectively make decisions. It also illustrates another connection to human reasoning. Our agent does not get stuck if it cannot find a perfect match. It is robust and will, as a human would, venture an educated guess after rejecting obviously incorrect answers.
 
 
 ### Alternative Visual Methods
 
-A number of visual methods for solving the RPM problem sets were tested along with the final heuristic method described here. The results of these experiments were mixed, but overall proved to be less successful. We'll explore these alternative approaches in the following sections.
+A number of visual methods for solving the RPM problem sets were tested along with the final heuristic method described above. The results of these experiments were mixed, but overall proved to be less successful. We'll explore these alternative approaches in the following sections.
 
 #### Affine
 
@@ -138,7 +136,9 @@ rotate 90 0.982131328488
 6 0.553490128611
 ```
 
-In contrast, our quadrant-based pixel change heuristic method had no trouble discerning the frame relationship in this problem. The 
+We see in this example that each affine transformation was applied and both rotate90 (counter-clockwise) and mirror resulted in figures with very high similarity scores to the example destination frame. Rotate90 was chosen, as it had a slightly higher match. This transform was then applied to frame C. Then similarity scores were computed for each candidate answer. We see from the result that Answer 1 provided the closest match.
+
+Although the procedure was valid and resulted in a strong answer choice, the agent incorrectly identified the initial transition as rotate90 instead of mirror. In contrast, our quadrant-based pixel change heuristic method had no trouble discerning the frame relationship in this problem. To improve this method in the future, we could assign preferences to each transform and set a threshold for how much better a match a lower ranked transform would have to be to consider it the better choice.
 
 #### Other Visual Heuristics
 
@@ -168,5 +168,5 @@ The process of developing a visual heuristic based RPM agent has highlighted the
 
 We've seen that multiple heuristics are utilized in human reasoning and how we can implement metacognition into our agent to improve flexibility across diverse problem types. Our experiments illustrate the need for strong consensus development and tie-breaking processes to insure that the best reasoning method is being applied to a given problem.
 
-Finally, we have observed the efficiency and effectiveness in utilizing visual heuristic methods over complex propositional modeling and reasoning. The simplicity, robustness, and speed of our agent's approach makes solving RPMs seem far easier than first thought.
+Finally, we observed the efficiency and effectiveness in utilizing visual heuristic methods over complex propositional modeling and reasoning. The simplicity, robustness, and speed of our agent's approach makes solving RPMs with visual heuristics a promising choice for future experiments.
 

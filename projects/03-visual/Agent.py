@@ -154,7 +154,7 @@ class Agent:
         target_vector = (black_pixel_counts[sample_dst] -
                          black_pixel_counts[sample_src])
         abs_target_vector = np.absolute(target_vector)
-        print 't', target_vector
+        #print 't', target_vector
         answers = []
         for label, pixel_counts in black_pixel_counts.iteritems():
             if label not in self.answer_ids:
@@ -167,7 +167,7 @@ class Agent:
             abs_distance = utils.distance(abs_diff_vector, abs_target_vector)
             answers.append((label, abs_distance))
 
-            print label, diff_vector, distance, abs_distance
+            #print label, diff_vector, distance, abs_distance
 
         return utils.sorted_nn(answers, 0)
 
@@ -211,7 +211,7 @@ class Agent:
         votes = [[k for k, _ in voter(problem, 'A', 'B', 'C')] for
                  voter in self.voters.itervalues()]
         answer = utils.first_consensus(votes)
-        print problem.correctAnswer, answer
+        #print problem.correctAnswer, answer
         return str(answer)
 
     def solve2x2(self, problem):
@@ -220,7 +220,7 @@ class Agent:
         #votes.extend([[k for k, _ in voter(problem, 'A', 'C', 'B')] for
                       #voter in self.voters.itervalues()])
         answer = utils.first_consensus(votes)
-        print problem.correctAnswer, answer
+        #print problem.correctAnswer, answer
         return str(answer)
 
     def solve3x3(self, problem):
