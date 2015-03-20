@@ -21,7 +21,11 @@ class Agent:
         self.voters = {
             #'pixel change': self.rank_with_pixel_change,
             #'key point change': self.rank_with_key_point_change,
-            'quadrant pixel change': self.rank_with_quadrant_pixel_change,
+            #'quadrant pixel change': self.rank_with_quadrant_pixel_change,
+            #'quadrant pixel change abs': self.rank_with_quadrant_pixel_change_abs,
+            'quadrant pixel change and abs': self.rank_with_quadrant_pixel_change_and_abs,
+            #'quadrant pixel change magnitude': self.rank_with_quadrant_pixel_change_magnitude,
+            #'transformed quadrant pixel change': self.rank_with_transformed_quadrant_pixel_change,
             #'quadrant key point change': self.rank_with_quadrant_key_point_change,
         }
 
@@ -54,12 +58,30 @@ class Agent:
         return np.asarray([cls.get_pixel_count(image.crop(box)) for
                            box in quadrants])
 
+    @classmethod
+    def get_segmented_pixel_count(cls, image, segment_count=1):
+        segments = 4 * segment_count
+        height, width = image.size
+        quadrants = (
+            (0, 0, width / 2, height / 2),
+            (width / 2, 0, width, height / 2),
+            (0, height / 2, width / 2, height),
+            (width / 2, height / 2, width, height)
+        )
+        if segments <= 4:
+            return np.asarray([cls.get_pixel_count(image.crop(box)) for
+                               box in quadrants])
+        else:
+            return np.concatenate(
+                [cls.get_segmented_pixel_count(image.crop(box), segment_count - 1) for
+                 box in quadrants])
+
     @staticmethod
     def get_pixel_count(image, color=0):
         for count, pixel_color in image.getcolors():
             if pixel_color == color:
-                return count
-        return 0
+                return float(count)
+        return 1.0
 
     @staticmethod
     def get_key_point_count(image):
@@ -78,16 +100,86 @@ class Agent:
             [cls.get_key_point_count(image[box[0]:box[2], box[1]:box[3]]) for
              box in quadrants])
 
-    def rank_with_quadrant_pixel_change(self, problem, sample_src, sample_dst,
-                                        target):
+    def rank_with_quadrant_pixel_change_magnitude(self, problem, sample_src, sample_dst, target):
         images = self.get_pil_images(problem)
-        black_pixel_counts = {k: self.get_quadrant_pixel_count(i) for
+        black_pixel_counts = {k: self.get_segmented_pixel_count(i, 1) for
                               k, i in images.iteritems()}
-        target_vector = black_pixel_counts[sample_dst] - black_pixel_counts[sample_src]
+        target_distance = utils.distance(black_pixel_counts[sample_dst],
+                                         black_pixel_counts[sample_src])
+        #for k, v in black_pixel_counts.iteritems():
+            #if k in self.answer_ids:
+                #print k, v - black_pixel_counts[target]
+        answers = {k: utils.distance(v, black_pixel_counts[target]) for
+                   k, v in black_pixel_counts.iteritems() if
+                   k in self.answer_ids}
+        return utils.sorted_nn(answers, target_distance)
+
+    def rank_with_quadrant_pixel_change_abs(self, problem, sample_src, sample_dst, target):
+        images = self.get_pil_images(problem)
+        black_pixel_counts = {k: self.get_segmented_pixel_count(i, 1) for
+                              k, i in images.iteritems()}
+        target_vector = np.absolute(
+            black_pixel_counts[sample_dst] - black_pixel_counts[sample_src])
+        #print target_vector
+        #for k, v in black_pixel_counts.iteritems():
+            #if k in self.answer_ids:
+                #print k, np.absolute(v - black_pixel_counts[target])
+        answers = {k: utils.distance(
+            np.absolute(v - black_pixel_counts[target]),
+                   target_vector) for
+                   k, v in black_pixel_counts.iteritems() if
+                   k in self.answer_ids}
+        return utils.sorted_nn(answers, 0)
+
+    def rank_with_quadrant_pixel_change(self, problem, sample_src, sample_dst, target):
+        images = self.get_pil_images(problem)
+        black_pixel_counts = {k: self.get_segmented_pixel_count(i, 1) for
+                              k, i in images.iteritems()}
+        target_vector = black_pixel_counts[sample_dst] - \
+            black_pixel_counts[sample_src]
+        print target_vector
+        #for k, v in black_pixel_counts.iteritems():
+            #if k in self.answer_ids:
+                #print k, v - black_pixel_counts[target]
         answers = {k: utils.distance(v - black_pixel_counts[target],
                                      target_vector) for
                    k, v in black_pixel_counts.iteritems() if
                    k in self.answer_ids}
+        return utils.sorted_nn(answers, 0)
+
+    def rank_with_quadrant_pixel_change_and_abs(self, problem, sample_src, sample_dst, target):
+        images = self.get_pil_images(problem)
+        black_pixel_counts = {k: self.get_segmented_pixel_count(i, 1) for
+                              k, i in images.iteritems()}
+        target_vector = (black_pixel_counts[sample_dst] -
+                         black_pixel_counts[sample_src])
+        print 'change'
+        print target_vector
+        for k, v in black_pixel_counts.iteritems():
+            if k in self.answer_ids:
+                print k, (v - black_pixel_counts[target])
+        answers = [(
+            k, utils.distance(
+                (v - black_pixel_counts[target]),
+                target_vector)) for
+            k, v in black_pixel_counts.iteritems() if
+            k in self.answer_ids]
+        # abs
+        target_vector = (np.absolute(black_pixel_counts[sample_dst] -
+                                     black_pixel_counts[sample_src]))
+        print 'abs change'
+        print target_vector
+        for k, v in black_pixel_counts.iteritems():
+            if k in self.answer_ids:
+                print k, np.absolute(v - black_pixel_counts[target])
+        answers = [(
+            k, utils.distance(
+                np.absolute(v - black_pixel_counts[target]),
+                target_vector)) for
+            k, v in black_pixel_counts.iteritems() if
+            k in self.answer_ids]
+
+        #answers.extend(answers2)
         return utils.sorted_nn(answers, 0)
 
     def rank_with_pixel_change(self, problem, sample_src, sample_dst, target):
@@ -101,12 +193,14 @@ class Agent:
                    k in self.answer_ids}
         return utils.sorted_nn(answers, difference)
 
-    def rank_with_quadrant_key_point_change(self, problem, sample_src, sample_dst,
-                                            target):
+    def rank_with_quadrant_key_point_change(
+        self, problem, sample_src, sample_dst,
+            target):
         images = self.get_cv2_images(problem)
         key_point_counts = {k: self.get_quadrant_key_point_count(i) for
                             k, i in images.iteritems()}
-        target_vector = key_point_counts[sample_dst] - key_point_counts[sample_src]
+        target_vector = key_point_counts[sample_dst] - \
+            key_point_counts[sample_src]
         answers = {k: utils.distance(v - key_point_counts[target],
                                      target_vector) for
                    k, v in key_point_counts.iteritems() if
@@ -128,22 +222,23 @@ class Agent:
         votes = [[k for k, _ in voter(problem, 'A', 'B', 'C')] for
                  voter in self.voters.itervalues()]
         answer = utils.first_consensus(votes)
-        print problem.correctAnswer, answer
+        #print problem.correctAnswer, answer
         return str(answer)
 
     def solve2x2(self, problem):
         votes = [[k for k, _ in voter(problem, 'A', 'B', 'C')] for
                  voter in self.voters.itervalues()]
-        votes.extend([[k for k, _ in voter(problem, 'A', 'C', 'B')] for
-                      voter in self.voters.itervalues()])
+        #votes.extend([[k for k, _ in voter(problem, 'A', 'C', 'B')] for
+                      #voter in self.voters.itervalues()])
         answer = utils.first_consensus(votes)
-        print problem.correctAnswer, answer
+        #print problem.correctAnswer, answer
         return str(answer)
 
     def solve3x3(self, problem):
         return "None"
 
     def Solve(self, problem):
+        print problem.getName()
         problem_type = problem.getProblemType()
         if problem_type not in self.type_handlers:
             return random.choice(self.answer_ids)

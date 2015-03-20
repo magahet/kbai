@@ -24,7 +24,9 @@ def get_target_change(obj, src, dst, target):
 
 
 def sorted_nn(obj, target):
-    return sorted(obj.items(), key=lambda x: abs(x[1] - target))
+    if isinstance(obj, dict):
+        obj = obj.items()
+    return sorted(obj, key=lambda x: abs(x[1] - target))
 
 
 def first_match(votes):
