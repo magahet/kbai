@@ -80,8 +80,8 @@ class Agent:
     def get_pixel_count(image, color=0):
         for count, pixel_color in image.getcolors():
             if pixel_color == color:
-                return float(count)
-        return 1.0
+                return count
+        return 0
 
     @staticmethod
     def get_key_point_count(image):
@@ -137,7 +137,7 @@ class Agent:
                               k, i in images.iteritems()}
         target_vector = black_pixel_counts[sample_dst] - \
             black_pixel_counts[sample_src]
-        print target_vector
+        #print target_vector
         #for k, v in black_pixel_counts.iteritems():
             #if k in self.answer_ids:
                 #print k, v - black_pixel_counts[target]
@@ -153,33 +153,22 @@ class Agent:
                               k, i in images.iteritems()}
         target_vector = (black_pixel_counts[sample_dst] -
                          black_pixel_counts[sample_src])
-        print 'change'
-        print target_vector
-        for k, v in black_pixel_counts.iteritems():
-            if k in self.answer_ids:
-                print k, (v - black_pixel_counts[target])
-        answers = [(
-            k, utils.distance(
-                (v - black_pixel_counts[target]),
-                target_vector)) for
-            k, v in black_pixel_counts.iteritems() if
-            k in self.answer_ids]
-        # abs
-        target_vector = (np.absolute(black_pixel_counts[sample_dst] -
-                                     black_pixel_counts[sample_src]))
-        print 'abs change'
-        print target_vector
-        for k, v in black_pixel_counts.iteritems():
-            if k in self.answer_ids:
-                print k, np.absolute(v - black_pixel_counts[target])
-        answers = [(
-            k, utils.distance(
-                np.absolute(v - black_pixel_counts[target]),
-                target_vector)) for
-            k, v in black_pixel_counts.iteritems() if
-            k in self.answer_ids]
+        abs_target_vector = np.absolute(target_vector)
+        print 't', target_vector
+        answers = []
+        for label, pixel_counts in black_pixel_counts.iteritems():
+            if label not in self.answer_ids:
+                continue
+            diff_vector = pixel_counts - black_pixel_counts[target]
+            distance = utils.distance(diff_vector, target_vector)
+            answers.append((label, distance))
 
-        #answers.extend(answers2)
+            abs_diff_vector = np.absolute(diff_vector)
+            abs_distance = utils.distance(abs_diff_vector, abs_target_vector)
+            answers.append((label, abs_distance))
+
+            print label, diff_vector, distance, abs_distance
+
         return utils.sorted_nn(answers, 0)
 
     def rank_with_pixel_change(self, problem, sample_src, sample_dst, target):
@@ -222,7 +211,7 @@ class Agent:
         votes = [[k for k, _ in voter(problem, 'A', 'B', 'C')] for
                  voter in self.voters.itervalues()]
         answer = utils.first_consensus(votes)
-        #print problem.correctAnswer, answer
+        print problem.correctAnswer, answer
         return str(answer)
 
     def solve2x2(self, problem):
@@ -231,7 +220,7 @@ class Agent:
         #votes.extend([[k for k, _ in voter(problem, 'A', 'C', 'B')] for
                       #voter in self.voters.itervalues()])
         answer = utils.first_consensus(votes)
-        #print problem.correctAnswer, answer
+        print problem.correctAnswer, answer
         return str(answer)
 
     def solve3x3(self, problem):

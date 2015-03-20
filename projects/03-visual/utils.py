@@ -62,4 +62,14 @@ def first_consensus(votes):
 
 
 def distance(a, b):
-    return np.linalg.norm(np.asarray(a) - np.asarray(b))
+    return np.linalg.norm(np.asarray(a) - np.asarray(b)).astype(int)
+
+
+def get_similarity(a, b):
+    im1 = np.asarray(a).astype(np.bool)
+    im2 = np.asarray(b).astype(np.bool)
+    if im1.shape != im2.shape:
+        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
+    intersection = np.logical_and(im1, im2)
+    union = np.logical_or(im1, im2)
+    return intersection.sum() / float(union.sum())
