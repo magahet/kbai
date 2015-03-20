@@ -1,7 +1,7 @@
 import random
 from PIL import (Image, ImageOps)
 import utils
-import numpy as np
+#import numpy as np
 
 
 class Agent:
@@ -42,11 +42,11 @@ class Agent:
         max_similarity = 0.0
         for name, func in self.transforms.iteritems():
             similarity = utils.get_similarity(func(images[sample_src]), images[sample_dst])
-            #print name, similarity
+            print name, similarity
             if similarity > max_similarity:
                 max_similarity = similarity
                 best, transform = name, func
-        #print best, max_similarity
+        print best, max_similarity
         transformed_image = transform(images[target])
         transformed_image.save('/tmp/test.png')
         answers = {}
@@ -54,7 +54,7 @@ class Agent:
         for name, image in images.iteritems():
             if name not in self.answer_ids:
                 continue
-            #print name, utils.get_similarity(transformed_image, image)
+            print name, utils.get_similarity(transformed_image, image)
             image.save('/tmp/{}.png'.format(name))
             answers[name] = utils.get_similarity(transformed_image, image)
         return answers
