@@ -36,33 +36,36 @@ def main(problemSet, problems, root='Problems (Image Data)'):
         'DGF',
         'BHC',
         'EHF',
+        'AEE',
     )
 
     ids_2x2 = (
         'ABC',
         'ACB',
     )
-    available_voters = agent.available_voters.keys()
-    for num in range(1, len(available_voters) + 1):
-        print num
-        for voters in itertools.combinations(available_voters, num):
-            print voters,
+    #available_voters = agent.available_voters.keys()
+    #for num in range(1, len(available_voters) + 1):
+        #print num
+        #for voters in itertools.combinations(available_voters, num):
+            #print voters,
+            #for set in sets:
+                #for problem in set.getProblems():
+                    #if problem.getProblemType() != '2x1 (Image)':
+                        #continue
+                    #if agent.solve2x1_train(problem, voters) == problem.correctAnswer:
+                        #correct[voters] += 1
+            #print correct[voters]
+
+    for num in range(1, len(ids_3x3) + 1):
+        for frames in itertools.combinations(ids_3x3, num):
+            print frames,
             for set in sets:
                 for problem in set.getProblems():
-                    if problem.getProblemType() != '2x1 (Image)':
+                    if problem.getProblemType() != '3x3 (Image)':
                         continue
-                    if agent.solve2x1_train(problem, voters) == problem.correctAnswer:
-                        correct[voters] += 1
-            print correct[voters]
-
-    #for frames in itertools.permutations(ids_3x3, 3):
-        #print frames
-        #for set in sets:
-            #for problem in set.getProblems():
-                #if problem.getProblemType() != '3x3 (Image)':
-                    #continue
-                #if agent.solve3x3_train(problem, frames) == problem.correctAnswer:
-                    #correct[frames] += 1
+                    if agent.solve3x3_train2(problem, frames) == problem.correctAnswer:
+                        correct[frames] += 1
+            print correct[frames]
 
     ordered = sorted(correct.items(), key=lambda x: x[1])
     print ordered

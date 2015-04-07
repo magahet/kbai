@@ -238,14 +238,22 @@ class Agent:
         return self.solve_with_transition_votes(problem, transition_sets)
 
     def solve3x3(self, problem):
+        #transition_sets = (
+            #('A', 'C', 'G'),
+            #('B', 'C', 'H'),
+            #('D', 'F', 'G'),
+            #('D', 'G', 'F'),
+            #('B', 'H', 'C'),
+            #('E', 'H', 'F'),
+        #)
         # found through training
         transition_sets = (
             ('A', 'C', 'G'),
-            ('B', 'C', 'H'),
             ('D', 'F', 'G'),
-            ('D', 'G', 'F'),
+            ('E', 'F', 'H'),
             ('B', 'H', 'C'),
             ('E', 'H', 'F'),
+            ('A', 'E', 'E'),
         )
         return self.solve_with_transition_votes(problem, transition_sets)
 
