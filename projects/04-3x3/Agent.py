@@ -18,6 +18,16 @@ class Agent:
             '2x2 (Image)': self.solve2x2,
             '3x3 (Image)': self.solve3x3,
         }
+        self.available_voters = {
+            'pixel change': self.rank_with_pixel_change,
+            'key point change': self.rank_with_key_point_change,
+            'quadrant pixel change': self.rank_with_quadrant_pixel_change,
+            'quadrant pixel change abs': self.rank_with_quadrant_pixel_change_abs,
+            #'quadrant pixel change and abs': self.rank_with_quadrant_pixel_change_and_abs,
+            #'quadrant pixel change magnitude': self.rank_with_quadrant_pixel_change_magnitude,
+            #'transformed quadrant pixel change': self.rank_with_transformed_quadrant_pixel_change,
+            #'quadrant key point change': self.rank_with_quadrant_key_point_change,
+        }
         self.voters = {
             #'pixel change': self.rank_with_pixel_change,
             #'key point change': self.rank_with_key_point_change,
@@ -208,30 +218,61 @@ class Agent:
         return utils.sorted_nn(answers, difference)
 
     def solve2x1(self, problem):
-        votes = [[k for k, _ in voter(problem, 'A', 'B', 'C')] for
-                 voter in self.voters.itervalues()]
+        transition_sets = (
+            ('A', 'B', 'C'),
+        )
+        return self.solve_with_transition_votes(problem, transition_sets)
+
+    def solve2x1_train(self, problem, voters):
+        votes = [[k for k, _ in self.available_voters[v](problem, 'A', 'B', 'C')] for
+                 v in voters]
         answer = utils.first_consensus(votes)
         #print problem.correctAnswer, answer
         return str(answer)
 
     def solve2x2(self, problem):
-        votes = [[k for k, _ in voter(problem, 'A', 'B', 'C')] for
-                 voter in self.voters.itervalues()]
-        #votes.extend([[k for k, _ in voter(problem, 'A', 'C', 'B')] for
-                      #voter in self.voters.itervalues()])
+        transition_sets = (
+            ('A', 'B', 'C'),
+            ('A', 'C', 'B'),
+        )
+        return self.solve_with_transition_votes(problem, transition_sets)
+
+    def solve3x3(self, problem):
+        # found through training
+        transition_sets = (
+            ('A', 'C', 'G'),
+            ('B', 'C', 'H'),
+            ('D', 'F', 'G'),
+            ('D', 'G', 'F'),
+            ('B', 'H', 'C'),
+            ('E', 'H', 'F'),
+        )
+        return self.solve_with_transition_votes(problem, transition_sets)
+
+    def solve_with_transition_votes(self, problem, transition_sets):
+        votes = []
+        for _set in transition_sets:
+            sample_src, sample_dst, target = _set
+            votes.extend([[k for k, _ in voter(problem, sample_src, sample_dst, target)] for
+                          voter in self.voters.itervalues()])
         answer = utils.first_consensus(votes)
         #print problem.correctAnswer, answer
         return str(answer)
 
-    def solve3x3(self, problem):
-        votes = [[k for k, _ in voter(problem, 'A', 'E', 'E')] for
+    def solve3x3_train(self, problem, frames):
+        sample_src, sample_dst, target = frames
+        votes = [[k for k, _ in voter(problem, sample_src, sample_dst, target)] for
                  voter in self.voters.itervalues()]
-        votes.extend([[k for k, _ in voter(problem, 'A', 'C', 'G')] for
-                      voter in self.voters.itervalues()])
-        votes.extend([[k for k, _ in voter(problem, 'B', 'C', 'H')] for
-                      voter in self.voters.itervalues()])
-        votes.extend([[k for k, _ in voter(problem, 'E', 'F', 'H')] for
-                      voter in self.voters.itervalues()])
+        answer = utils.first_consensus(votes)
+        #print problem.correctAnswer, answer
+        return str(answer)
+
+    def solve3x3_train2(self, problem, frame_sets):
+        votes = []
+        for frames in frame_sets:
+            sample_src, sample_dst, target = frames
+            votes.extend([[k for k, _ in voter(problem, sample_src, sample_dst, target)] for
+                          voter in self.voters.itervalues()])
         answer = utils.first_consensus(votes)
         #print problem.correctAnswer, answer
         return str(answer)
