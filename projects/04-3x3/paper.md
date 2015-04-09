@@ -9,7 +9,7 @@
 
 ## Introduction
 
-We will explore the design of an AI agent built to solve 2x1, 2x2, 3x3 visual analogy problems given images rather than object descriptions. This will include details on the agent's strengths, weaknesses, efficiency, and the how it's methodology compares to that of human cognition.
+We will explore the design of an AI agent built to solve 2x1, 2x2, and 3x3 visual analogy problems given images rather than object descriptions. This will include details on the agent's strengths, weaknesses, efficiency, and the how it's methodology compares to that of human cognition.
 
 In the spirit of full disclosure, this report includes much of the original content from the design report for our previous RPM agent. The agent's core problem solving methodology has not changed. Significant changes include experimentation into advanced voting methods and applying our visual approach to 3x3 problems.
 
@@ -97,7 +97,7 @@ A number of visual methods for solving the RPM problem sets were tested along wi
 
 #### Affine
 
-Surprisingly, the Affine method of finding and applying image transformations performed rather poorly. Our agent was able to solve 9/40 on Basic Problems and very few challenge questions. The agent performed the following process:
+Surprisingly, the Affine method of finding and applying image transformations performed rather poorly. Our agent was able to solve 9/40 on 2x1 and 2x2 Basic Problems and very few challenge questions. The agent performed the following process:
 
 ```
 for transform in [rotations, mirror, flip]:
@@ -119,23 +119,23 @@ Here, the agent would find a rotation or would flip the image, leading it to cho
 2x2 Basic Problem 04
 
 # transforms and resulting S(T(A), B) scores
-rotate 270 0.405911635671
-rotate 90 0.982131328488
-flip 0.405600189036
-no change 0.648440341549
-mirror 0.982069410748
-rotate 180 0.645021345732
+rotate 270 0.40
+rotate 90 0.98
+flip 0.40
+no change 0.64
+mirror 0.98
+rotate 180 0.64
 
 # best transform
-rotate 90 0.982131328488
+rotate 90 0.98
 
 # S(T(C), X) scores for each answer choice
-1 0.981612994321
-3 0.64950401923
-2 0.638670997616
-5 0.700274692817
-4 0.40145764414
-6 0.553490128611
+1 0.98
+3 0.64
+2 0.63
+5 0.70
+4 0.40
+6 0.55
 ```
 
 We see in this example that each affine transformation was applied and both rotate90 (counter-clockwise) and mirror resulted in figures with very high similarity scores to the example destination frame. Rotate90 was chosen, as it had a slightly higher match. This transform was then applied to frame C. Then similarity scores were computed for each candidate answer. We see from the result that Answer 1 provided the closest match.
@@ -155,7 +155,7 @@ Other visual heuristic were tested as well. These are some of the methods tested
 
 #### Voting/Bagging
 
-Along with each of these heuristics, combinations of each were also attempted. This was accomplished by having each method rank the answer choices and various election methods were used to form a consensus. In the end, the combination of the two quadrant-based pixel change metrics provided the best method for identifying correct answers.
+Along with each of these heuristics, combinations of them were also attempted. This was accomplished by having each method rank the answer choices and various election methods were used to form a consensus. In the end, the combination of the two quadrant-based pixel change metrics provided the best method for identifying correct answers.
 
 In addition to testing voting among multiple heuristics methods, training was also done against combinations of frame relationships in 3x3 problems. This was done to find the optimal set of frame relationships to use in creation of the voting pool. The following illustrates this experimentation:
 
@@ -163,13 +163,14 @@ In addition to testing voting among multiple heuristics methods, training was al
 Each relationship tuple is defined as:
     (example source, example destination, target)
     # example:
-    # get A to C change and compare that to H to X change
+    # get A to C change and
+    # compare that to H to X change
     # (A, C, H)
 
 For each combination of relationship tuples:
     # example: ((A, C, H), (A, H, C), (A, E, E))
     Get ranked answers based on each tuple
-    Use first consensus election to select a final answer
+    Use consensus election to select a final answer
 ```
 
 This process was performed on every possible combination of relationship tuples. The set of tuples that resulted in the highest number of correct answers was the following:
@@ -196,7 +197,7 @@ Our agent runs with minimal resource usage and in constant time for a given prob
 
 Another performance benefit to a strictly visual method is that translation to propositional models is not required. This saves our agent from having to perform complex object detection and spatial reasoning. Although some of the visual methods require image transforms, the simple heuristic method that performed best in this experiment required no transformations or processing of any kind. This reduced the computational complexity of our agent to simply counting pixels and performing basic arithmetic.
 
-The only additional computation was introduced with voting based on the different frame relationships comparisons. In 2x2 problems, this doubles the running time. In 3x3 problems, running time is six times longer. However, running time for all 87 provided problems still completes in under three seconds. This is orders of magnitude faster than the previous version of our RPM agent that solved problems using propositional methods.
+The only additional computation was introduced with voting based on the different frame relationship comparisons. In 2x2 problems, this doubles the running time. In 3x3 problems, running time is six times longer. However, running time for all 87 provided problems still completes in under three seconds. This is orders of magnitude faster than the previous version of our RPM agent that solved problems using propositional methods.
 
 
 ## Conclusion
