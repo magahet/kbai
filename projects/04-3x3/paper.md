@@ -186,7 +186,9 @@ transition_sets = (
 )
 ```
 
-Used in combination, votes from each of these frame relationships resulted in an improvement of 50% over a single relationship comparison.
+Used in combination, votes from each of these frame relationships resulted in an improvement of 50% over a single relationship comparison. Figure \ref{3x3BasicProblem15} shows the transition frame pairs being considered by this set of tuples.
+
+![3x3BasicProblem15\label{3x3BasicProblem15}](3x3BasicProblem15b.PNG)
 
 2x2 Problems only have two such relationship tuples. Although (A, B, C) and (A, C, B) tuples resulted in the same number of correct answers, our agent uses them both in voting with the expectation that accuracy on untested problems may be improved.
 
