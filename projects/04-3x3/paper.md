@@ -1,7 +1,7 @@
-% AI Agent to Solve 2x1 and 2x2 Visual Analogy Problems in Image Format
+% AI Agent to Solve 2x1, 2x2, and 3x3 Visual Analogy Problems in Image Format
 % Magahet Mendiola
   (mmendiola3@mail.gatech.edu)
-% March 19th, 2015
+% April 12th, 2015
 \makeatletter
 \def\verbatim{\small\@verbatim \frenchspacing\@vobeyspaces \@xverbatim}
 \makeatother
@@ -9,7 +9,9 @@
 
 ## Introduction
 
-We will explore the design of an AI agent built to solve 2x1 and 2x2 visual analogy problems given images rather than object descriptions. This will include details on the agent's strengths, weaknesses, efficiency, and the how it's methodology compares to that of human cognition.
+We will explore the design of an AI agent built to solve 2x1, 2x2, 3x3 visual analogy problems given images rather than object descriptions. This will include details on the agent's strengths, weaknesses, efficiency, and the how it's methodology compares to that of human cognition.
+
+In the spirit of full disclosure, this report includes much of the original content from the design report for our previous RPM agent. The agent's core problem solving methodology has not changed. Significant changes include experimentation into advanced voting methods and applying our visual approach to 3x3 problems.
 
 
 ## Visual vs. Propositional Approaches
@@ -76,7 +78,7 @@ From this data we can observe that the top two quadrants have both changed appro
 
 ### Ability to Solve RPMs
 
-The quadrant-based pixel change heuristic was able to solve 9/20 2x1 and 13/20 2x2 basic test questions. It performed very well on problems with whole frame rotations and reflections; problems where object spatial relationships changed between frames; and problem where objects were added and removed between frames. It performed well across a variety of problems that were quite difficult to solve using propositional methods, including our first example in figure \ref{2x2BasicProblem16}.
+The quadrant-based pixel change heuristic was able to solve 9/20 2x1, 13/20 2x2, and 14 3x3 basic test questions. It performed very well on problems with whole frame rotations and reflections; problems where object spatial relationships changed between frames; and problem where objects were added and removed between frames. It performed well across a variety of problems that were quite difficult to solve using propositional methods, including our first example in figure \ref{2x2BasicProblem16}.
 
 Interestingly, our agent performed poorly on fairly simple problems including the one in figure \ref{2x1BasicProblem01}.
 
@@ -155,11 +157,46 @@ Other visual heuristic were tested as well. These are some of the methods tested
 
 Along with each of these heuristics, combinations of each were also attempted. This was accomplished by having each method rank the answer choices and various election methods were used to form a consensus. In the end, the combination of the two quadrant-based pixel change metrics provided the best method for identifying correct answers.
 
+In addition to testing voting among multiple heuristics methods, training was also done against combinations of frame relationships in 3x3 problems. This was done to find the optimal set of frame relationships to use in creation of the voting pool. The following illustrates this experimentation:
+
+```
+Each relationship tuple is defined as:
+    (example source, example destination, target)
+    # example:
+    # get A to C change and compare that to H to X change
+    # (A, C, H)
+
+For each combination of relationship tuples:
+    # example: ((A, C, H), (A, H, C), (A, E, E))
+    Get ranked answers based on each tuple
+    Use first consensus election to select a final answer
+```
+
+This process was performed on every possible combination of relationship tuples. The set of tuples that resulted in the highest number of correct answers was the following:
+
+```
+transition_sets = (
+    ('A', 'C', 'G'),
+    ('D', 'F', 'G'),
+    ('E', 'F', 'H'),
+    ('B', 'H', 'C'),
+    ('E', 'H', 'F'),
+    ('A', 'E', 'E'),
+)
+```
+
+Used in combination, votes from each of these frame relationships resulted in an improvement of 50% over a single relationship comparison.
+
+2x2 Problems only have two such relationship tuples. Although (A, B, C) and (A, C, B) tuples resulted in the same number of correct answers, our agent uses them both in voting with the expectation that accuracy on untested problems may be improved.
+
+
 ### Computational Complexity
 
 Our agent runs with minimal resource usage and in constant time for a given problem type. Since each problem does a finite and fixed number of computations, there is no variance in the runtime between problems. This makes the basic visual heuristic method of solving RPMs quite efficient compared to propositional methods, which can quickly grow in complexity as you consider correspondence combinations between various frames.
 
 Another performance benefit to a strictly visual method is that translation to propositional models is not required. This saves our agent from having to perform complex object detection and spatial reasoning. Although some of the visual methods require image transforms, the simple heuristic method that performed best in this experiment required no transformations or processing of any kind. This reduced the computational complexity of our agent to simply counting pixels and performing basic arithmetic.
+
+The only additional computation was introduced with voting based on the different frame relationships comparisons. In 2x2 problems, this doubles the running time. In 3x3 problems, running time is six times longer. However, running time for all 87 provided problems still completes in under three seconds. This is orders of magnitude faster than the previous version of our RPM agent that solved problems using propositional methods.
 
 
 ## Conclusion
